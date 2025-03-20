@@ -1,43 +1,70 @@
-package com.example.demo;
+package com.example.demo.Models;
 import jakarta.persistence.*; // Используйте jakarta.persistence, если у вас Spring Boot 3+
 
 @Entity
 @Table // Опционально: указать имя таблицы, если отличается от имени класса
-public class User {
+public class Book {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY) // Автоматическая генерация ID базой данных
     private Long id;
 
-    @Column(unique = true, nullable = false) // Указывает, что поле должно быть уникальным и не может быть null в базе данных
-    private String login;
+    @Column(nullable = false) // Указывает, что поле не может быть null в базе данных
+    private Short year_of_publ;
 
     @Column(nullable = false) // Указывает, что поле не может быть null в базе данных
-    private String password;
+    private String publ_house;
+
+    @Column(nullable = false) // Указывает, что поле не может быть null в базе данных
+    private String language;
+
+    @Column(nullable = false) // Указывает, что поле не может быть null в базе данных
+    private String condit;
+
+    @Column(nullable = false) // Указывает, что поле не может быть null в базе данных
+    private String status;
 
     // Геттеры и сеттеры
     public Long getId() {
         return id;
     }
-
     public void setId(Long id) {
         this.id = id;
     }
 
-    public String getLogin() {
-        return login;
+    public Short getYear_of_publ() {
+        return year_of_publ;
+    }
+    public void setYear_of_publ(Short year_of_publ) {
+        this.year_of_publ = year_of_publ;
     }
 
-    public void setLogin(String login) {
-        this.login = login;
+    public String getLanguage() {
+        return language;
+    }
+    public void setLanguage(String language) {
+        this.language = language;
     }
 
-    public String getPassword() {
-        return password;
+    public String getPubl_house() {
+        return publ_house;
+    }
+    public void setPubl_house(String publ_house) {
+        this.publ_house = publ_house;
     }
 
-    public void setPassword(String password) {
-        this.password = password;
+    public String getCondit() {
+        return condit;
+    }
+    public void setCondit(String condit) {
+        this.condit = condit;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+    public void setStatus(String status) {
+        this.status = status;
     }
 }
 
