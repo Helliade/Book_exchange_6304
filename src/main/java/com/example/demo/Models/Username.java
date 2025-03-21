@@ -3,7 +3,7 @@ import jakarta.persistence.*; // Используйте jakarta.persistence, е�
 
 @Entity
 @Table // Опционально: указать имя таблицы, если отличается от имени класса
-public class User {
+public class Username {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY) // Автоматическая генерация ID базой данных
@@ -14,6 +14,16 @@ public class User {
 
     @Column(nullable = false) // Указывает, что поле не может быть null в базе данных
     private String password;
+
+    // Конструкторы
+    public Username() {
+        // Пустой конструктор для JPA
+    }
+
+    public Username(String login, String password) {
+        this.login = login;
+        this.password = password;
+    }
 
     // Геттеры и сеттеры
     public Long getId() {

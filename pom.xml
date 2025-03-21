@@ -38,6 +38,7 @@
 	</scm>
 	<properties>
 		<java.version>21</java.version>
+		<spring-security.version>6.4.4</spring-security.version> <!-- Пример безопасной версии -->
 	</properties>
 	<dependencies>
 		<dependency>
@@ -64,6 +65,23 @@
 			<scope>runtime</scope>
 		</dependency>
 
+		<!-- Для миграции: -->
+		<dependency>
+			<groupId>org.flywaydb</groupId>
+			<artifactId>flyway-core</artifactId>
+			<version>9.16.0</version> <!-- или актуальную версию -->
+		</dependency>
+
+		<!-- Для хэширования и безопасности: -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-security</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework.security</groupId>
+			<artifactId>spring-security-crypto</artifactId>
+		</dependency>
 
 	</dependencies>
 

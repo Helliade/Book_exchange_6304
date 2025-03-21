@@ -15,7 +15,7 @@ public class Book {
     @Column(nullable = false) // Указывает, что поле не может быть null в базе данных
     private String publ_house;
 
-    @Column(nullable = false) // Указывает, что поле не может быть null в базе данных
+    @Column(name = "lang", nullable = false) // Указывает, что поле не может быть null в базе данных
     private String language;
 
     @Column(nullable = false) // Указывает, что поле не может быть null в базе данных

@@ -3,7 +3,7 @@ package com.example.demo.Models;
 import jakarta.persistence.*; // Используйте jakarta.persistence, если у вас Spring Boot 3+
 
 @Entity
-@Table // Опционально: указать имя таблицы, если отличается от имени класса
+@Table(name = "Сreation") // Опционально: указать имя таблицы, если отличается от имени класса
 public class Work {
 
     @Id
