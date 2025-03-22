@@ -1,43 +1,74 @@
-package com.example.demo;
+package com.example.demo.Models;
+
 import jakarta.persistence.*; // Используйте jakarta.persistence, если у вас Spring Boot 3+
 
 @Entity
-@Table // Опционально: указать имя таблицы, если отличается от имени класса
-public class User {
+@Table(name = "Сreation") // Опционально: указать имя таблицы, если отличается от имени класса
+public class Work {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY) // Автоматическая генерация ID базой данных
     private Long id;
 
-    @Column(unique = true, nullable = false) // Указывает, что поле должно быть уникальным и не может быть null в базе данных
-    private String login;
+    @Column(nullable = false) // Указывает, что поле не может быть null в базе данных
+    private String name;
 
     @Column(nullable = false) // Указывает, что поле не может быть null в базе данных
-    private String password;
+    private String writer;
+
+    @Column(nullable = false) // Указывает, что поле не может быть null в базе данных
+    private String genre;
+
+    @Column(nullable = false) // Указывает, что поле не может быть null в базе данных
+    private Short year;
+
+    // Конструкторы
+    public Work() {
+        // Пустой конструктор для JPA
+    }
+
+    public Work(String name, String writer, String genre, Short year) {
+        this.name = name;
+        this.writer = writer;
+        this.genre = genre;
+        this.year = year;
+    }
 
     // Геттеры и сеттеры
     public Long getId() {
         return id;
     }
-
     public void setId(Long id) {
         this.id = id;
     }
 
-    public String getLogin() {
-        return login;
+
+    public String getName() {
+        return name;
+    }
+    public void setName(String name) {
+        this.name = name;
     }
 
-    public void setLogin(String login) {
-        this.login = login;
+    public String getWriter() {
+        return writer;
+    }
+    public void setWriter(String writer) {
+        this.writer = writer;
     }
 
-    public String getPassword() {
-        return password;
+    public String getGenre() {
+        return genre;
+    }
+    public void setGenre(String genre) {
+        this.genre = genre;
     }
 
-    public void setPassword(String password) {
-        this.password = password;
+    public Short getYear() {
+        return year;
+    }
+    public void setYear(Short year) {
+        this.year = year;
     }
 }
 
