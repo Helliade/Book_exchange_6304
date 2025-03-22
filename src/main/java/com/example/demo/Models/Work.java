@@ -22,6 +22,18 @@ public class Work {
     @Column(nullable = false) // Указывает, что поле не может быть null в базе данных
     private Short year;
 
+    // Конструкторы
+    public Work() {
+        // Пустой конструктор для JPA
+    }
+
+    public Work(String name, String writer, String genre, Short year) {
+        this.name = name;
+        this.writer = writer;
+        this.genre = genre;
+        this.year = year;
+    }
+
     // Геттеры и сеттеры
     public Long getId() {
         return id;

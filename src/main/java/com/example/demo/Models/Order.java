@@ -19,6 +19,17 @@ public class Order {
     @Column(nullable = false) // Указывает, что поле не может быть null в базе данных
     private Long user_id;
 
+    // Конструкторы
+    public Order() {
+        // Пустой конструктор для JPA
+    }
+
+    public Order(String type, String status, Long user_id) {
+        this.type = type;
+        this.status = status;
+        this.user_id = user_id;
+    }
+
     // Геттеры и сеттеры
     public Long getId() {
         return id;

@@ -24,6 +24,19 @@ public class Book {
     @Column(nullable = false) // Указывает, что поле не может быть null в базе данных
     private String status;
 
+    // Конструкторы
+    public Book() {
+        // Пустой конструктор для JPA
+    }
+
+    public Book(Short year_of_publ, String publ_house, String language, String condit, String status) {
+        this.year_of_publ = year_of_publ;
+        this.publ_house = publ_house;
+        this.language = language;
+        this.condit = condit;
+        this.status = status;
+    }
+
     // Геттеры и сеттеры
     public Long getId() {
         return id;
