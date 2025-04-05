@@ -1,8 +1,11 @@
 package com.example.demo.Models;
 import jakarta.persistence.*; // Используйте jakarta.persistence, если у вас Spring Boot 3+
 
+import java.util.HashSet;
+import java.util.Set;
+
 @Entity
-@Table(name = "Сreation") // Опционально: указать имя таблицы, если отличается от имени класса
+@Table(name = "Creation") // Опционально: указать имя таблицы, если отличается от имени класса
 public class Work {
 
     @Id
@@ -18,8 +21,14 @@ public class Work {
     @Column(nullable = false) // Указывает, что поле не может быть null в базе данных
     private String genre;
 
-    @Column(nullable = false) // Указывает, что поле не может быть null в базе данных
+    @Column(nullable = true)
     private Short year;
+
+    @ManyToMany(cascade = CascadeType.ALL)
+    @JoinTable(name="Book_Creation",
+            joinColumns=  @JoinColumn(name="Creation_id", referencedColumnName="id"),
+            inverseJoinColumns= @JoinColumn(name="Book_id", referencedColumnName="id") )
+    private Set<Book> books = new HashSet<Book>();
 
     // Конструкторы
     public Work() {

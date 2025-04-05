@@ -1,5 +1,8 @@
 package com.example.demo.Models;
-import jakarta.persistence.*; // Используйте jakarta.persistence, если у вас Spring Boot 3+
+import jakarta.persistence.*;
+
+import java.util.HashSet;
+import java.util.Set;
 
 
 @Entity
@@ -19,6 +22,13 @@ public class Order {
     @ManyToOne
     @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false)
     private Username user;
+
+    @ManyToMany(cascade = CascadeType.ALL)
+    @JoinTable(name="Booking_Book",
+            joinColumns=  @JoinColumn(name="Booking_id", referencedColumnName="id"),
+            inverseJoinColumns= @JoinColumn(name="Book_id", referencedColumnName="id") )
+    private Set<Book> books = new HashSet<Book>();
+
 //    @Column(nullable = false) // Указывает, что поле не может быть null в базе данных
 //    private Long user_id;
 
