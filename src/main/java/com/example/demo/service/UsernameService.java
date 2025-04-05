@@ -65,6 +65,17 @@ public class UsernameService {
         return usernameRepository.save(username);
     }
 
+    public boolean authenticateUsername(Username username) { //String login, String rawPassword) {
+        // Поиск пользователя по логину
+        Username user = usernameRepository.findByLogin(username.getLogin());
+        if (user == null) {
+            return false; // Пользователь не найден
+        }
+
+        // Проверка пароля
+        return passwordEncoder.matches(username.getPassword(), user.getPassword()); //метод проверяет, соответсвует ли пароль
+    }                                                                               //пользователя хешу, хранящимуся в БД
+
     //Обновление пользователя
     public Username updateUsername(Username username) {
         return usernameRepository.save(username);
