@@ -42,34 +42,82 @@ public class DemoApplication {
 		SpringApplication.run(DemoApplication.class, args);
 
 	}
-	@Bean
-	public CommandLineRunner demo() {
-		return args -> {
+//	@Bean
+//	public CommandLineRunner demo() {
+//		return args -> {
 // Здесь можно добавить код для тестирования вашего приложения
 // Например, вызвать методы вашего сервиса для создания, чтения, обновления и удаления данных
 // и выводить результаты на консоль
 
 
 // Пример:
-			Username username = new Username();
-			username.setLogin("Katya");
-			username.setPassword("12345678");
-			usernameService.createUsername(username);
+//			String[] logins = {
+//					"admin",
+//					"superuser",
+//					"sysadmin",
+//					"root",
+//					"manager",
+//					"ivanov",
+//					"petrov",
+//					"sidorova",
+//					"smirnov",
+//					"kuznetsov",
+//					"popova",
+//					"volkov",
+//					"fedorov",
+//					"nikolaev",
+//					"orlova",
+//					"test_user",
+//					"demo",
+//					"guest",
+//					"temp_user",
+//					"backup"
+//			};
+//
+//			// Массив соответствующих паролей (нехешированных)
+//			String[] passwords = {
+//					"Admin123!",
+//					"SuperPass456",
+//					"SysAdmin789",
+//					"RootPassword!",
+//					"ManagerPass1",
+//					"Ivanov2023",
+//					"PetrovPass",
+//					"Sid2023!",
+//					"SmirnovPass",
+//					"Kuz2023!",
+//					"PopovaPass",
+//					"Volkov2023",
+//					"FedorPass!",
+//					"Nikolaev1",
+//					"Orlova2023",
+//					"TestPass123",
+//					"DemoPassword",
+//					"GuestAccess",
+//					"TempPass123",
+//					"Backup2023!"
+//			};
+//			for (int i = 0; i<20; i++) {
+//				Username username = new Username();
+//				username.setLogin(logins[i]);
+//				username.setPassword(passwords[i]);
+//				if (usernameService.registerUsername(username) != null) {
+//					Username savedUsername = usernameService.getUsernameById(username.getId());
+//					System.out.println("Saved Username: " + savedUsername);
+//				};
+//			}
 
 
-			Order order = new Order();
-			order.setUser(username);
-			order.setType("give");
-			order.setStatus("completed");
-			orderService.createOrder(order);
+
+//			Order order = new Order();
+//			order.setUser(username);
+//			order.setType("give");
+//			order.setStatus("completed");
+//			orderService.createOrder(order);
 
 
-			Username savedUsername = usernameService.getUsernameById(username.getId());
-			System.out.println("Saved Username: " + savedUsername);
-
-
-			Order savedOrder = orderService.getOrderById(order.getId());
-			System.out.println("Saved Order: " + savedOrder);
-		};
-	}
+//			Order savedOrder = orderService.getOrderById(order.getId());
+//			System.out.println("Saved Order: " + savedOrder);
+//		};
+//	}
 }

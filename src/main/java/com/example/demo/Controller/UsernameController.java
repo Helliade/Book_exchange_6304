@@ -3,6 +3,8 @@ package com.example.demo.Controller;
 import com.example.demo.Models.Username;
 import com.example.demo.service.UsernameService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -33,21 +35,20 @@ public class UsernameController {
     }
 
 
-    @PostMapping("/register")
-    public Username createUsername(@RequestBody Username username) {
-        return usernameService.createUsername(username);
-    }
-//    // Эндпоинт для регистрации нового пользователя
-//    @PostMapping
-//    public ResponseEntity<?> registerUser(@RequestBody RegistrationRequest request) {
-//        try {
-//            Username user = usernameService.registerUser(request.getLogin(), request.getPassword());
-//            return ResponseEntity.ok(user);
-//        } catch (RuntimeException e) {
-//            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-//        }
+//    @PostMapping("/register")
+//    public Username createUsername(@RequestBody Username username) {
+//        return usernameService.registerUsername(username);
 //    }
-
+    // Эндпоинт для регистрации нового пользователя
+    @PostMapping("/register")
+    public ResponseEntity<?> createUsername(@RequestBody Username username) {
+        try {
+            Username user = usernameService.registerUsername(username);
+            return ResponseEntity.ok(user);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+    }
     @PutMapping("/{id}")
     public Username updateUsername(@PathVariable Long id, @RequestBody Username username) {
         username.setId(id);

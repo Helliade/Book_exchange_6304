@@ -1,6 +1,6 @@
 package com.example.demo.Models;
 import jakarta.persistence.*; // Используйте jakarta.persistence, если у вас Spring Boot 3+
-import org.apache.catalina.User;
+
 
 @Entity
 @Table(name = "Booking") // Опционально: указать имя таблицы, если отличается от имени класса
@@ -15,7 +15,6 @@ public class Order {
 
     @Column(nullable = false) // Указывает, что поле не может быть null в базе данных
     private String status;
-
 
     @ManyToOne
     @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false)

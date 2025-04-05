@@ -4,6 +4,10 @@ import com.example.demo.Models.Username;
 import com.example.demo.repository.UsernameRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import java.util.List;
 
@@ -12,10 +16,26 @@ import java.util.List;
 public class UsernameService {
 
     private final UsernameRepository usernameRepository;
+    private final BCryptPasswordEncoder passwordEncoder;
+//
+//    public UsernameService(PasswordEncoder passwordEncoder) {
+//        this.passwordEncoder = passwordEncoder;
+//    }
+//
+//    // Хэширование пароля перед сохранением в БД
+//    public String encodePassword(String rawPassword) {
+//        return passwordEncoder.encode(rawPassword);
+//    }
+//
+//    // Проверка пароля (например, при логине)
+//    public boolean isPasswordValid(String rawPassword, String encodedPassword) {
+//        return passwordEncoder.matches(rawPassword, encodedPassword);
+//    }
 
     @Autowired
-    public UsernameService(UsernameRepository usernameRepository) {
+    public UsernameService(UsernameRepository usernameRepository, BCryptPasswordEncoder passwordEncoder) {
         this.usernameRepository = usernameRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     //Получение списка всех пользователей
@@ -29,7 +49,19 @@ public class UsernameService {
     }
 
     //Создание пользователя
-    public Username createUsername(Username username) {
+//    public Username createUsername(Username username) {
+//        return usernameRepository.save(username);
+//    }
+
+    @Transactional
+    public Username registerUsername(Username username) {
+        // Проверка существования пользователя
+        if (usernameRepository.findByLogin(username.getLogin()) != null) {
+            throw new RuntimeException("Пользователь с таким логином уже существует");
+        }
+
+        // Создание нового пользователя
+        username.setPassword(passwordEncoder.encode(username.getPassword())); // Хеширование пароля
         return usernameRepository.save(username);
     }
 
