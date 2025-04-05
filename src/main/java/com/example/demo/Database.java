@@ -1,6 +1,6 @@
-package com.example.demo;
-import java.sql.*;
-public class Database {
+//package com.example.demo;
+//import java.sql.*;
+//public class Database {
 //    private static final String URL = "jdbc:postgresql://host.docker.internal:5432/postgres";
 //    private static final String USER = "postgres";
 //    private static final String PASSWORD = "mysecretpassword";
@@ -31,4 +31,4 @@ public class Database {
 //            e.printStackTrace();
 //        }
 //    }
-}
+//}

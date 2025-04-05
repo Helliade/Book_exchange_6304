@@ -1,6 +1,6 @@
 package com.example.demo.Models;
-
 import jakarta.persistence.*; // Используйте jakarta.persistence, если у вас Spring Boot 3+
+
 
 @Entity
 @Table(name = "Booking") // Опционально: указать имя таблицы, если отличается от имени класса
@@ -16,18 +16,21 @@ public class Order {
     @Column(nullable = false) // Указывает, что поле не может быть null в базе данных
     private String status;
 
-    @Column(nullable = false) // Указывает, что поле не может быть null в базе данных
-    private Long user_id;
+    @ManyToOne
+    @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false)
+    private Username user;
+//    @Column(nullable = false) // Указывает, что поле не может быть null в базе данных
+//    private Long user_id;
 
     // Конструкторы
     public Order() {
         // Пустой конструктор для JPA
     }
 
-    public Order(String type, String status, Long user_id) {
+    public Order(String type, String status, Username user) {
         this.type = type;
         this.status = status;
-        this.user_id = user_id;
+        this.user = user;
     }
 
     // Геттеры и сеттеры
@@ -52,11 +55,11 @@ public class Order {
         this.status = status;
     }
 
-    public Long getUser_id() {
-        return user_id;
-    }
-    public void setUser_id(Long user_id) {
-        this.user_id = user_id;
+//    public Username getUser() {
+//        return user;
+//    }
+    public void setUser(Username user) {
+        this.user = user;
     }
 }
 
@@ -68,3 +71,4 @@ public class Order {
 //@GeneratedValue(strategy = GenerationType.IDENTITY): Определяет стратегию генерации первичного ключа. GenerationType.IDENTITY обычно используется для автоинкрементных столбцов в большинстве баз данных.
 //@Column(name = "login", nullable = false): Настраивает столбец в базе данных, соответствующий полю username. nullable = false указывает, что столбец не может быть NULL.
 //@Column(unique = true): Указывает, что столбец должен быть уникальным.
+//@ManyToOne - связь многие-к-одному по конкретному полю.

@@ -49,6 +49,7 @@ public class Username {
     public void setPassword(String password) {
         this.password = password;
     }
+
 }
 
 //Аннотации JPA:

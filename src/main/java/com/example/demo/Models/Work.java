@@ -1,5 +1,4 @@
 package com.example.demo.Models;
-
 import jakarta.persistence.*; // Используйте jakarta.persistence, если у вас Spring Boot 3+
 
 @Entity
