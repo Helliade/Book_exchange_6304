@@ -15,13 +15,13 @@
 	<description>Demo project for Spring Boot</description>
 	<url/>
 
-	<repositories> <!-- Добавила ссылку на репозиторий -->
-		<repository>
-			<id>spring-repo</id>
-			<name>Spring Repository</name>
-			<url>https://repo.spring.io/milestone</url>
-		</repository>
-	</repositories>
+<!--	<repositories> &lt;!&ndash; Добавила ссылку на репозиторий &ndash;&gt;-->
+<!--		<repository>-->
+<!--			<id>spring-repo</id>-->
+<!--			<name>Spring Repository</name>-->
+<!--			<url>https://repo.spring.io/milestone</url>-->
+<!--		</repository>-->
+<!--	</repositories>-->
 
 
 	<licenses>
@@ -115,6 +115,13 @@
             <artifactId>spring-data-commons</artifactId>
             <version>3.4.3</version>
         </dependency>
+
+		<!-- Катя веб -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-thymeleaf</artifactId>
+		</dependency>
+
 
 	</dependencies>
 
