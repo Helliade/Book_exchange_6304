@@ -1,7 +1,7 @@
 package com.example.demo;
 
-import com.example.demo.Models.Order;
-import com.example.demo.Models.Username;
+import com.example.demo.Models.Book;
+import com.example.demo.service.BookService;
 import com.example.demo.service.OrderService;
 import com.example.demo.service.UsernameService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +13,7 @@ import org.springframework.context.annotation.Bean;
 import java.sql.DriverManager;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.List;
 
 @SpringBootApplication
 
@@ -20,12 +21,14 @@ public class DemoApplication {
 
 	private final UsernameService usernameService;
 	private final OrderService orderService;
+	private final BookService bookService;
 
 
 	@Autowired
-	public DemoApplication(UsernameService usernameService, OrderService orderService) {
+	public DemoApplication(UsernameService usernameService, OrderService orderService, BookService bookService) {
 		this.usernameService = usernameService;
 		this.orderService = orderService;
+		this.bookService = bookService;
 	}
 	public static void main(String[] args) {
 		String url = "jdbc:postgresql://localhost:5432/postgres";
@@ -40,14 +43,40 @@ public class DemoApplication {
 			e.printStackTrace();
 		}
 		SpringApplication.run(DemoApplication.class, args);
-
 	}
-//	@Bean
-//	public CommandLineRunner demo() {
-//		return args -> {
-// Здесь можно добавить код для тестирования вашего приложения
-// Например, вызвать методы вашего сервиса для создания, чтения, обновления и удаления данных
-// и выводить результаты на консоль
+	@Bean
+	public CommandLineRunner demo() {
+		return args -> {
+// Kод для тестирования вашего приложения
+
+//			if (usernameService.authenticateUsername("admin", "Admin123!")) {
+//				Username username = usernameService.getUserByLogin("admin");
+//				System.out.println("User found! ID:" + username.getId());
+//				List<Order> orders = orderService.getOrdersByUser(username);
+//				System.out.println(orders);
+//
+//
+//				Order order = orderService.getOrderById(orders.get(0).getId());
+//				order.setType("TAKE");
+//				order = orderService.updateOrder(order);
+//
+//				order = orderService.getOrderById(orders.get(1).getId());
+//				order.setStatus("IN_TRANSIT");
+//				order = orderService.updateOrder(order);
+//
+//				orders = orderService.getOrdersByUser(username);
+//
+//				System.out.println(orders);
+//			}
+//			else {
+//				System.out.println("User not found.");
+//			}
+			List<Book> book = bookService.getAllBooks();
+			System.out.println(book);
+
+
+
+
 
 
 // Пример:
@@ -118,6 +147,6 @@ public class DemoApplication {
 
 //			Order savedOrder = orderService.getOrderById(order.getId());
 //			System.out.println("Saved Order: " + savedOrder);
-//		};
-//	}
+		};
+	}
 }

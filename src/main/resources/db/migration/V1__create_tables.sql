@@ -4,9 +4,6 @@ CREATE TABLE Username (
     password VARCHAR(255) NOT NULL
 );
 
-INSERT INTO Username (id, login, password) VALUES
-(2, 'Daria', '87654321');
-
 CREATE TABLE Booking (
     id BIGINT PRIMARY KEY,
     type VARCHAR(50) NOT NULL CHECK (type IN ('GIVE', 'TAKE')),
@@ -43,4 +40,6 @@ CREATE TABLE Creation (
     year_of_publ SMALLINT NOT NULL
 );
 
+INSERT INTO Username (id, login, password) VALUES
+(2, 'Daria', '87654321');
 -- Надо поправить некоторые поля на "выбор варианта"

@@ -3,6 +3,7 @@ import jakarta.persistence.*; // Используйте jakarta.persistence, е�
 
 
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 @Entity
@@ -13,11 +14,11 @@ public class Book {
     @GeneratedValue(strategy = GenerationType.IDENTITY) // Автоматическая генерация ID базой данных
     private Long id;
 
-    @Column(nullable = false) // Указывает, что поле не может быть null в базе данных
-    private Short year_of_publ;
+    @Column(name = "year_of_publ", nullable = false)
+    private Short yearOfPubl;
 
-    @Column(nullable = false) // Указывает, что поле не может быть null в базе данных
-    private String publ_house;
+    @Column(name = "publ_house",nullable = false) // Указывает, что поле не может быть null в базе данных
+    private String publHouse;
 
     @Column(name = "lang", nullable = false) // Указывает, что поле не может быть null в базе данных
     private String language;
@@ -45,9 +46,9 @@ public class Book {
         // Пустой конструктор для JPA
     }
 
-    public Book(Short year_of_publ, String publ_house, String language, String condit, String status) {
-        this.year_of_publ = year_of_publ;
-        this.publ_house = publ_house;
+    public Book(Short yearOfPubl, String publHouse, String language, String condit, String status) {
+        this.yearOfPubl = yearOfPubl;
+        this.publHouse = publHouse;
         this.language = language;
         this.condit = condit;
         this.status = status;
@@ -61,11 +62,11 @@ public class Book {
         this.id = id;
     }
 
-    public Short getYear_of_publ() {
-        return year_of_publ;
+    public Short getYearOfPubl() {
+        return yearOfPubl;
     }
-    public void setYear_of_publ(Short year_of_publ) {
-        this.year_of_publ = year_of_publ;
+    public void setYearOfPubl(Short yearOfPubl) {
+        this.yearOfPubl = yearOfPubl;
     }
 
     public String getLanguage() {
@@ -75,11 +76,11 @@ public class Book {
         this.language = language;
     }
 
-    public String getPubl_house() {
-        return publ_house;
+    public String getPublHouse() {
+        return publHouse;
     }
-    public void setPubl_house(String publ_house) {
-        this.publ_house = publ_house;
+    public void setPublHouse(String publHouse) {
+        this.publHouse = publHouse;
     }
 
     public String getCondit() {
@@ -94,6 +95,35 @@ public class Book {
     }
     public void setStatus(String status) {
         this.status = status;
+    }
+
+
+
+
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Book book = (Book) o;
+        return Objects.equals(id, book.id); // Пример: сравнение по ID
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
+
+    @Override
+    public String toString() {
+        return "Book{" +
+                "id=" + id +
+                ", yearOfPubl=" + yearOfPubl +
+                ", publHouse='" + publHouse + '\'' +
+                ", language='" + language + '\'' +
+                ", condit='" + condit + '\'' +
+                ", status='" + status + '\'' +
+                '}';
     }
 }
 

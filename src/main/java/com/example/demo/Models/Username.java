@@ -50,6 +50,14 @@ public class Username {
         this.password = password;
     }
 
+
+    @Override
+    public String toString() {
+        return "Username{" +
+                "id=" + id +
+                ", login='" + login + '\'' +
+                '}';
+    }
 }
 
 //Аннотации JPA:
