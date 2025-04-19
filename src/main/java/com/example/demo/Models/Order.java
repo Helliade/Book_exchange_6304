@@ -2,6 +2,7 @@ package com.example.demo.Models;
 import jakarta.persistence.*;
 
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 
@@ -27,7 +28,7 @@ public class Order {
     @JoinTable(name="Booking_Book",
             joinColumns=  @JoinColumn(name="Booking_id", referencedColumnName="id"),
             inverseJoinColumns= @JoinColumn(name="Book_id", referencedColumnName="id") )
-    private Set<Book> books = new HashSet<Book>();
+    private Set<Book> books = new HashSet<>();
 
 //    @Column(nullable = false) // Указывает, что поле не может быть null в базе данных
 //    private Long user_id;
@@ -70,6 +71,31 @@ public class Order {
 //    }
     public void setUser(Username user) {
         this.user = user;
+    }
+
+
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Order order = (Order) o;
+        return Objects.equals(id, order.id); // Пример: сравнение по ID
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
+
+    @Override
+    public String toString() {
+        return "Order{" +
+                "id=" + id +
+                ", type='" + type + '\'' +
+                ", status='" + status + '\'' +
+                ", user=" + user.getLogin() +
+                '}';
     }
 }
 

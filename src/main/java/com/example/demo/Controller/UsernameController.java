@@ -1,61 +1,103 @@
 package com.example.demo.Controller;
 
+import com.example.demo.DTO.UsernameDTO;
+import com.example.demo.Models.Order;
 import com.example.demo.Models.Username;
+import com.example.demo.service.OrderService;
 import com.example.demo.service.UsernameService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.data.domain.Pageable;
 import java.util.List;
 
+//        GET    /api/users                - Получить всех пользователей
+//        GET    /api/users/{id}           - Получить пользователя по ID
+//   ?     POST   /api/users                - Создать нового пользователя ??????
+//        POST   /api/users/register       - Создать нового пользователя
+//   ?     PUT    /api/users/{id}           - Обновить пользователя
+//        DELETE /api/users/{id}           - Удалить пользователя
+//        GET    /api/users/{id}/bookings  - Получить все бронирования пользователя
+//        POST   /api/users/login          - Аутентификация пользователя
+
 @RestController
-@RequestMapping("/users")
+@RequestMapping("/api/users")
 public class UsernameController {
 
-
     private final UsernameService usernameService;
-
+    private final OrderService orderService;
 
     @Autowired
-    public UsernameController(UsernameService usernameService) {
+    public UsernameController(UsernameService usernameService, OrderService orderService) {
         this.usernameService = usernameService;
+        this.orderService = orderService;
     }
 
-
+//GET
     @GetMapping
     public List<Username> getAllUsernames() {
         return usernameService.getAllUsernames();
     }
 
-
     @GetMapping("/{id}")
-    public Username getUsernameById(@PathVariable Long id) {
+    public UsernameDTO getUsernameById(@PathVariable Long id) {
         return usernameService.getUsernameById(id);
     }
 
+    @GetMapping("/{userId}/orders")    // А точно ли тут???
+    public ResponseEntity<List<Order>> getUserOrders(
+            @PathVariable Long userId,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String type,
+            @PageableDefault(size = 10) Pageable pageable) {
+        List<Order> orders = orderService.getUserOrders(userId, status, type, pageable);
+        return ResponseEntity.ok(orders);
+    }
 
-//    @PostMapping("/register")
-//    public Username createUsername(@RequestBody Username username) {
-//        return usernameService.registerUsername(username);
-//    }
-    // Эндпоинт для регистрации нового пользователя
-    @PostMapping("/register")
+//POST
+
+    @PostMapping("/register")    //я не понимаю, как я буду работать в системе, если не знаю свой ID
     public ResponseEntity<?> createUsername(@RequestBody Username username) {
         try {
-            Username user = usernameService.registerUsername(username);
+            UsernameDTO user = usernameService.registerUsername(username);
             return ResponseEntity.ok(user);
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
     }
+
+    @PostMapping("/login")
+    public ResponseEntity<?> authenticateUser(String login, String rawPassword) {
+        boolean isAuthenticated = usernameService.authenticateUsername(login, rawPassword);
+        if (isAuthenticated) {
+            return ResponseEntity.ok("Authentication successful");
+        } else {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
+        }
+    }
+
+//PUT
+
+    //TODO переписать метод обновления пользователя
     @PutMapping("/{id}")
     public Username updateUsername(@PathVariable Long id, @RequestBody Username username) {
         username.setId(id);
         return usernameService.updateUsername(username);
     }
+//    @PutMapping("/{id}")
+//    public ResponseEntity<UsernameDTO> updateUsername(
+//            @PathVariable Long id,
+//            @Valid @RequestBody UpdateUserRequest updateRequest) {
+//
+//        UsernameDTO updatedUser = usernameService.updateUser(id, updateRequest);
+//        return ResponseEntity.ok(updatedUser);
+//    }
 
 
+    //DELETE
     @DeleteMapping("/{id}")
     public void deleteUsername(@PathVariable Long id) {
         usernameService.deleteUsername(id);
@@ -166,38 +208,10 @@ public class UsernameController {
 //        }
 //    }
 //
-//    // DTO для смены пароля
-//    public static class ChangePasswordRequest {
-//        private String login;
-//        private String oldPassword;
-//        private String newPassword;
-//
-//        public ChangePasswordRequest() {
-//        }
-//
-//        public String getLogin() {
-//            return login;
-//        }
-//
-//        public void setLogin(String login) {
-//            this.login = login;
-//        }
-//
-//        public String getOldPassword() {
-//            return oldPassword;
-//        }
-//
-//        public void setOldPassword(String oldPassword) {
-//            this.oldPassword = oldPassword;
-//        }
-//
-//        public String getNewPassword() {
-//            return newPassword;
-//        }
-//
-//        public void setNewPassword(String newPassword) {
-//            this.newPassword = newPassword;
-//        }
+
+//    @PostMapping("/register")
+//    public Username createUsername(@RequestBody Username username) {
+//        return usernameService.registerUsername(username);
 //    }
 //}
 

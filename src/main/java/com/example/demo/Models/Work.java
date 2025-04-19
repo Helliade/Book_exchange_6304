@@ -2,6 +2,7 @@ package com.example.demo.Models;
 import jakarta.persistence.*; // Используйте jakarta.persistence, если у вас Spring Boot 3+
 
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 @Entity
@@ -77,6 +78,22 @@ public class Work {
     }
     public void setYear(Short year) {
         this.year = year;
+    }
+
+
+
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Work work = (Work) o;
+        return Objects.equals(id, work.id); // Пример: сравнение по ID
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
     }
 }
 

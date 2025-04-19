@@ -48,7 +48,6 @@
 			<artifactId>spring-boot-starter</artifactId>
 		</dependency>
 
-		<!-- hyinya -->
 		<dependency>
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-context</artifactId>
@@ -86,60 +85,6 @@
 		</dependency>
 
 		<!-- Для хэширования и безопасности: -->
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-security</artifactId>
-		</dependency>
-
-		<dependency>
-			<groupId>org.springframework.security</groupId>
-			<artifactId>spring-security-crypto</artifactId>
-		</dependency>
-
-		<dependency>
-			<groupId>org.springframework.security</groupId>
-			<artifactId>spring-security-config</artifactId>
-		</dependency>
-
-		<dependency>
-			<groupId>org.springframework.security</groupId>
-			<artifactId>spring-security-test</artifactId>
-		</dependency>
-
-
-		<!--		!<dependency>-->
-<!--			<groupId>org.springframework</groupId>-->
-<!--			<artifactId>spring-jdbc</artifactId>-->
-<!--		</dependency>-->
-<!--		!<dependency>-->
-<!--			<groupId>org.springframework</groupId>-->
-<!--			<artifactId>spring-web</artifactId>-->
-<!--			<version>6.2.3</version>-->
-<!--		</dependency>-->
-
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-test</artifactId>
-			<scope>test</scope>
-		</dependency>
-
-
-<!--		&lt;!&ndash; Добавила ServletAPI для обработки API запросов &ndash;&gt;-->
-<!--		<dependency>-->
-<!--			<groupId>jakarta.servlet</groupId>-->
-<!--			<artifactId>jakarta.servlet-api</artifactId>-->
-<!--			<version>6.0.0</version>-->
-<!--		&lt;!&ndash;<scope>provided</scope>&ndash;&gt;-->
-<!--    	</dependency>-->
-
-<!--		&lt;!&ndash; Для миграции: &ndash;&gt;-->
-<!--		<dependency>-->
-<!--			<groupId>org.flywaydb</groupId>-->
-<!--			<artifactId>flyway-core</artifactId>-->
-<!--			<version>9.16.0</version> &lt;!&ndash; или актуальную версию &ndash;&gt;-->
-<!--		</dependency>-->
-
-<!--		&lt;!&ndash; Для хэширования и безопасности: &ndash;&gt;-->
 <!--		<dependency>-->
 <!--			<groupId>org.springframework.boot</groupId>-->
 <!--			<artifactId>spring-boot-starter-security</artifactId>-->
@@ -150,19 +95,26 @@
 <!--			<artifactId>spring-security-crypto</artifactId>-->
 <!--		</dependency>-->
 
-<!--		&lt;!&ndash; H2 Database (для тестов) &ndash;&gt;-->
 <!--		<dependency>-->
-<!--			<groupId>com.h2database</groupId>-->
-<!--			<artifactId>h2</artifactId>-->
-<!--			<scope>test</scope>-->
+<!--			<groupId>org.springframework.security</groupId>-->
+<!--			<artifactId>spring-security-config</artifactId>-->
 <!--		</dependency>-->
 
-<!--		&lt;!&ndash; AssertJ предоставляет гибкий и удобный API для работы с коллекциями, строками, объектами и исключениями &ndash;&gt;-->
 <!--		<dependency>-->
-<!--			<groupId>org.assertj</groupId>-->
-<!--			<artifactId>assertj-core</artifactId>-->
-<!--			<scope>test</scope>-->
+<!--			<groupId>org.springframework.security</groupId>-->
+<!--			<artifactId>spring-security-test</artifactId>-->
 <!--		</dependency>-->
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+        <dependency>
+            <groupId>org.springframework.data</groupId>
+            <artifactId>spring-data-commons</artifactId>
+            <version>3.4.3</version>
+        </dependency>
 
 	</dependencies>
 
