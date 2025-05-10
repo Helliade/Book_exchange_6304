@@ -6,27 +6,20 @@ import com.example.demo.Models.Username;
 import com.example.demo.repository.BookRepository;
 import com.example.demo.repository.OrderRepository;
 import com.example.demo.repository.UsernameRepository;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import org.springframework.data.domain.Pageable;
 import java.util.List;
-import java.util.Set;
 
 @Service
 public class OrderService {
-    private static final Set<String> VALID_STATUSES = Set.of(  // Хочу добавить BASKET_MODE
-            "CREATED",
-            "IN_TRANSIT",
-            "DELIVERY_READY",
-            "COMPLETED"
-    );
 
     private final OrderRepository orderRepository;
     private final UsernameRepository usernameRepository;
-
     private final BookRepository bookRepository;
 
     @Autowired
@@ -37,25 +30,17 @@ public class OrderService {
         this.bookRepository = bookRepository;
     }
 
-    public List<Order> getUserOrders(Long userId, String status, String type, Pageable pageable) {
+    public List<Order> getUserOrders(Long userId) {
         // Проверяем существование пользователя
         if (!usernameRepository.existsById(userId)) {
-            throw new ResponseStatusException(
-                    HttpStatus.NOT_FOUND,
-                    "User not found with id: " + userId
-            );
+            throw new EntityNotFoundException("User not found with id: " + userId);
         }
 
-        // Строим запрос в зависимости от параметров
-        if (status != null && type != null) {
-            return orderRepository.findByUserIdAndStatusAndType(userId, status, type, pageable);
-        } else if (status != null) {
-            return orderRepository.findByUserIdAndStatus(userId, status, pageable);
-        } else if (type != null) {
-            return orderRepository.findByUserIdAndType(userId, type, pageable);
-        } else {
-            return orderRepository.findByUserId(userId, pageable);
+        List<Order> orders = orderRepository.findByUserId(userId);
+        if (orders.isEmpty()) {
+            throw new EntityNotFoundException("No orders found.");
         }
+        return orders;
     }
 
     //Получение списка всех заказов
@@ -72,6 +57,10 @@ public class OrderService {
         return orderRepository.findById(id).orElse(null);
     }
 
+    public Order getOrderWithBooksById(Long id) {
+        return orderRepository.findWithBooksById(id).orElse(null);
+    }
+
     //Создание заказа
     public Order createOrder(Order order) {
         return orderRepository.save(order);
@@ -83,30 +72,40 @@ public class OrderService {
     }
 
     //Удаление заказа
-    public void deleteOrder(Long id) {
-        orderRepository.deleteById(id);
+    public void deleteOrder(Long orderId) {
+        orderRepository.findById(orderId)                           //находим заказ
+                .orElseThrow(() -> new EntityNotFoundException("Order not found with id: " + orderId));
+        orderRepository.deleteById(orderId);
     }
 
-//    public List<Order> getOrdersByStatus(String status, Pageable pageable) {
-//        if (status != null) {
-//            // Валидация статуса
-//            if (!VALID_STATUSES.contains(status)) {
-//                throw new ResponseStatusException(
-//                        HttpStatus.BAD_REQUEST,
-//                        "Invalid status. Allowed values: " + VALID_STATUSES
-//                );
-//            }
-//            return orderRepository.findByStatus(status, pageable);
-//        }
-//        return orderRepository.findAll(pageable).getContent();
-//    }
 
     public Order updateOrderStatus(Long orderId, String newStatus) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Order not found with id: " + orderId
+                ));
+
+        try {
+            OrderValidator.validateStatusTransition(order.getStatus(), newStatus);
+            order.setStatus(newStatus);
+            return orderRepository.save(order);
+        } catch (IllegalArgumentException e) {
+            // Обработка ошибок входящих параметров
+            throw new IllegalArgumentException(e.getMessage());
+        } catch (IllegalStateException e) {
+            // Обработка нарушений бизнес-правил
+            throw new IllegalStateException(e.getMessage());
+        }
+    }
+
+    //TODO добавить проверку на то, что заказ в статусе корзины
+    public Order updateOrderType(Long orderId, String newType) {
         // Валидация статуса
-        if (!VALID_STATUSES.contains(newStatus)) {
+        if (OrderValidator.isValidType(newType)) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "Invalid status. Allowed values: " + VALID_STATUSES
+                    "Invalid type. Allowed values: " + OrderValidator.getValidTypes()
             );
         }
 
@@ -116,47 +115,122 @@ public class OrderService {
                         "Order not found with id: " + orderId
                 ));
 
-        //TODO Проверка допустимости перехода статусов
-//        validateStatusTransition(order.getStatus(), newStatus);
-
-        order.setStatus(newStatus);
+        order.setType(newType);
         return orderRepository.save(order);
     }
 
-//    public Order addBookToOrder(Long orderId, Long bookId) {
-//        Order order = orderRepository.findById(orderId)
-//                .orElseThrow(() -> new ResponseStatusException(
-//                        HttpStatus.NOT_FOUND,
-//                        "Order not found with id: " + orderId
-//                ));
-//
-//        Book book = bookRepository.findById(bookId)
-//                .orElseThrow(() -> new ResponseStatusException(
-//                        HttpStatus.NOT_FOUND,
-//                        "Book not found with id: " + bookId
-//                ));
-//
-//        // Проверяем, не добавлена ли книга уже в заказ
-//        if (orderRepository.findBookIdsByBookingId(orderId).contains(bookId)) {
-//            throw new ResponseStatusException(
-//                    HttpStatus.BAD_REQUEST,
-//                    "Book with id " + bookId + " already exists in order"
-//            );
-//        }
-//
-//        // Проверяем доступность книги
-//        if (!"FREE".equals(book.getStatus())) {
-//            throw new ResponseStatusException(
-//                    HttpStatus.BAD_REQUEST,
-//                    "Book with id " + bookId + " is not available. Status: " + book.getStatus()
-//            );
-//        }
-//
-//        orderRepository.addBook(orderId, bookId);
-//        book.setStatus("BOOKED"); // Обновляем статус книги
-//
-//        return orderRepository.save(order);
-//    }
+    //TODO добавить проверку на то, что заказ в статусе корзины
+    @Transactional
+    public Order addBookToOrder(Long orderId, Long bookId) {
+        Order order = orderRepository.findById(orderId)                           //находим заказ
+                .orElseThrow(() -> new EntityNotFoundException("Order not found with id: " + orderId));
+
+        Book book = bookRepository.findById(bookId)                               //находим книгу
+                .orElseThrow(() -> new EntityNotFoundException("Book not found with id: " + bookId));
+
+        if (orderRepository.findBookIdsByBookingId(orderId).contains(bookId)) {   // Добавлена ли книга уже в заказ
+            throw new IllegalStateException("Book already exists in the order");
+        }
+
+        if (!"FREE".equals(book.getStatus())) {                                   // Проверяем доступность книги
+            throw new IllegalStateException("Book is not available. Status: " + book.getStatus());
+        }
+
+//        book.setStatus("BOOKED");
+//        bookRepository.save(book); // НЕ Обновляем статус книги (т.к. она просто в корзине)
+
+        // Добавляем книгу в заказ и сохраняем (обратная связь обновляется автоматически)
+        order.getBooks().add(book);
+
+        return orderRepository.save(order);
+    }
+
+    //TODO добавить проверку на то, что заказ в статусе корзины
+    @Transactional
+    public Order deleteBookFromOrder(Long orderId, Long bookId) {
+        Order order = orderRepository.findById(orderId)                           //находим заказ
+                .orElseThrow(() -> new EntityNotFoundException("Order not found with id: " + orderId));
+
+        Book book = bookRepository.findById(bookId)                               //находим книгу
+                .orElseThrow(() -> new EntityNotFoundException("Book not found with id: " + bookId));
+
+        if (orderRepository.findBookIdsByBookingId(orderId).contains(bookId)) {   // Есть ли книга в заказе
+            throw new IllegalStateException("Book not exists in the order");
+        }
+
+//        book.setStatus("BOOKED");
+//        bookRepository.save(book); // НЕ Обновляем статус книги (т.к. она просто в корзине)
+
+        // Добавляем книгу в заказ и сохраняем (обратная связь обновляется автоматически)
+        order.getBooks().remove(book);
+
+        return orderRepository.save(order);
+    }
+
+    public List<Order> getOrdersByUserIdAndTypeAndStatus(Long userId,String type, String status) { // Подразумевается,
+        // что авторизированный пользователь выбирает на сайте один из возможных типов и/или статусов заказа
+        // Поиск заказов
+        List<Order> orders;
+        if (type != null && status != null) {
+            orders = orderRepository.findByUserIdAndTypeAndStatus(userId, type, status);
+        } else if (type != null) {
+            orders = orderRepository.findByUserIdAndType(userId, type);
+        } else if (status != null) {
+            orders = orderRepository.findByUserIdAndStatus(userId, status);
+        } else {
+            throw new IllegalArgumentException(
+                    "At least one parameter (type or status) must be provided");
+        }
+
+        // Проверка результатов
+        if (orders.isEmpty()) {
+            String mess = "No orders found.";
+            if (type != null) mess += " Searched for type: " + type + ".";
+            if (status != null) mess += " Searched for status: " + status + ".";
+            throw new EntityNotFoundException(mess);
+        }
+        return orders;
+    }
+
+    public List<Order> getOrdersByTypeAndStatus(String type, String status) {
+
+        // Проверка статуса и типа (если переданы)
+        if (status != null && OrderValidator.isValidStatus(status)) {
+            throw new IllegalArgumentException(
+                    String.format("Invalid status: %s. Valid statuses: %s", status, OrderValidator.getValidStatuses()));
+        }
+        if (status != null && OrderValidator.isValidType(type)) {
+            throw new IllegalArgumentException(
+                    String.format("Invalid type: %s. Valid types: %s", type, OrderValidator.getValidTypes()));
+        }
+
+        // Поиск заказов
+        List<Order> orders;
+        if (type != null && status != null) {
+            orders = orderRepository.findByTypeAndStatus(type, status);
+        } else if (type != null) {
+            orders = orderRepository.findByType(type);
+        } else if (status != null) {
+            orders = orderRepository.findByStatus(status);
+        } else {
+            throw new IllegalArgumentException(
+                    "At least one parameter (type or status) must be provided");
+        }
+
+        // Проверка результатов
+        if (orders.isEmpty()) {
+            String mess = "No orders found.";
+            if (type != null) mess += " Searched for type: " + type + ".";
+            if (status != null) mess += " Searched for status: " + status + ".";
+            throw new EntityNotFoundException(mess);
+        }
+        return orders;
+    }
+
+
+
+
+
 
 //    public Set<Book> getBooksInOrder(Long orderId) {
 //        Order order = orderRepository.findByIdWithBooks(orderId)
@@ -168,3 +242,14 @@ public class OrderService {
 //        return order.getBooks();
 //    }
 }
+
+
+
+
+
+//        Username username = usernameRepository.findById(userId)                          // Проверяем, что пользователь
+//                .orElseThrow(() -> new RuntimeException("Username not found"));          //существует
+//
+//        if (!VALID_STATUSES.contains(status)) {                                          // Проверяем, что статус
+//            throw new IllegalArgumentException("Invalid order status: " + status);       //является допустимым значением
+//        }

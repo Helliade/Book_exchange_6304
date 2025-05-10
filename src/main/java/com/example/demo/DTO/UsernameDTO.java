@@ -1,5 +1,7 @@
 package com.example.demo.DTO;
 
+import com.example.demo.Models.Username;
+
 public class UsernameDTO {
     private Long id;
     private String login;
@@ -7,9 +9,9 @@ public class UsernameDTO {
     // Конструкторы
     public UsernameDTO() {}
 
-    public UsernameDTO(Long id, String login) {
-        this.id = id;
-        this.login = login;
+    public UsernameDTO(Username username) {
+        this.id = username.getId();
+        this.login = username.getLogin();
     }
 
     // Геттеры и сеттеры
@@ -27,5 +29,13 @@ public class UsernameDTO {
 
     public void setLogin(String login) {
         this.login = login;
+    }
+
+    @Override
+    public String toString() {
+        return "UsernameDTO{" +
+                "id=" + id +
+                ", login='" + login +
+                '}';
     }
 }

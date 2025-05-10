@@ -9,7 +9,7 @@ import java.util.Set;
 @Entity
 @Table(name = "Booking") // Опционально: указать имя таблицы, если отличается от имени класса
 public class Order {
-
+    //геттеры и сеттеры для поля книги многие-ко-многим
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY) // Автоматическая генерация ID базой данных
     private Long id;
@@ -30,8 +30,6 @@ public class Order {
             inverseJoinColumns= @JoinColumn(name="Book_id", referencedColumnName="id") )
     private Set<Book> books = new HashSet<>();
 
-//    @Column(nullable = false) // Указывает, что поле не может быть null в базе данных
-//    private Long user_id;
 
     // Конструкторы
     public Order() {
@@ -66,13 +64,27 @@ public class Order {
         this.status = status;
     }
 
-//    public Username getUser() {
-//        return user;
-//    }
+    public Username getUser() {
+        return user;
+    }
     public void setUser(Username user) {
         this.user = user;
     }
 
+    public Set<Book> getBooks() {
+        return books;
+    }
+
+    // Дополнительные методы для удобной работы с коллекцией
+    public void addBook(Book book) {
+        this.books.add(book);
+//        book.getOrders().add(this); // Обновляем обратную связь
+    }
+
+    public void removeBook(Book book) {
+        this.books.remove(book);
+        book.getOrders().remove(this); // Обновляем обратную связь
+    }
 
 
     @Override

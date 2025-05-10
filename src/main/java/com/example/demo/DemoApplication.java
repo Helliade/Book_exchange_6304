@@ -1,6 +1,8 @@
 package com.example.demo;
 
-import com.example.demo.Models.Book;
+import com.example.demo.DTO.OrderDTO;
+import com.example.demo.Models.Order;
+import com.example.demo.repository.OrderRepository;
 import com.example.demo.service.BookService;
 import com.example.demo.service.OrderService;
 import com.example.demo.service.UsernameService;
@@ -21,13 +23,15 @@ public class DemoApplication {
 
 	private final UsernameService usernameService;
 	private final OrderService orderService;
+	private final OrderRepository orderRepository;
 	private final BookService bookService;
 
 
 	@Autowired
-	public DemoApplication(UsernameService usernameService, OrderService orderService, BookService bookService) {
+	public DemoApplication(UsernameService usernameService, OrderService orderService, OrderRepository orderRepository, BookService bookService) {
 		this.usernameService = usernameService;
 		this.orderService = orderService;
+		this.orderRepository = orderRepository;
 		this.bookService = bookService;
 	}
 	public static void main(String[] args) {
@@ -71,11 +75,18 @@ public class DemoApplication {
 //			else {
 //				System.out.println("User not found.");
 //			}
-			List<Book> book = bookService.getAllBooks();
-			System.out.println(book);
+//			Long orderId = 5L;
+//			List<Order> book = orderRepository.findBookIdsByBookingId(orderId);
+//			System.out.println(book);
 
+//			orderRepository.addBookToOrder(12L, 15L);
+//			System.out.println(orderRepository.findBookIdsByBookingId(12L));
+//			System.out.println(orderRepository.findBookIdsByBookingId(12L).contains(16L));
+//			System.out.println(orderService.getOrderById(12L));
+//			orderService.addBookToOrder(12L, 16L);
 
-
+//			OrderDTO orderDTO = new OrderDTO(orderService.getOrderWithBooksById(16L));
+//			System.out.println(orderDTO);
 
 
 

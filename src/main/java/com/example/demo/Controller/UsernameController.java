@@ -1,10 +1,12 @@
 package com.example.demo.Controller;
 
+import com.example.demo.DTO.OrderDTO;
 import com.example.demo.DTO.UsernameDTO;
 import com.example.demo.Models.Order;
 import com.example.demo.Models.Username;
 import com.example.demo.service.OrderService;
 import com.example.demo.service.UsernameService;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
@@ -12,16 +14,18 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import org.springframework.data.domain.Pageable;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.util.LinkedList;
 import java.util.List;
 
-//        GET    /api/users                - Получить всех пользователей
-//        GET    /api/users/{id}           - Получить пользователя по ID
-//   ?     POST   /api/users                - Создать нового пользователя ??????
-//        POST   /api/users/register       - Создать нового пользователя
-//   ?     PUT    /api/users/{id}           - Обновить пользователя
-//        DELETE /api/users/{id}           - Удалить пользователя
-//        GET    /api/users/{id}/bookings  - Получить все бронирования пользователя
-//        POST   /api/users/login          - Аутентификация пользователя
+//   #     GET    /api/users                   - Получить всех пользователей
+//   #     GET    /api/users/{id}              - Получить пользователя по ID
+//   #     GET    /api/users/{userId}/search   - Фильтрация заказов по типу и/или статусу у определенного пользователя
+//   #     POST   /api/users/register          - Создать нового пользователя
+//   #?     PUT/PATCH    /api/users/{id}           - Обновить пользователя
+//   #     DELETE /api/users/{id}              - Удалить пользователя
+//   #     POST   /api/users/login             - Аутентификация пользователя
 
 @RestController
 @RequestMapping("/api/users")
@@ -44,17 +48,46 @@ public class UsernameController {
 
     @GetMapping("/{id}")
     public UsernameDTO getUsernameById(@PathVariable Long id) {
-        return usernameService.getUsernameById(id);
+        return new UsernameDTO(usernameService.getUsernameById(id));
     }
 
-    @GetMapping("/{userId}/orders")    // А точно ли тут???
-    public ResponseEntity<List<Order>> getUserOrders(
+    @GetMapping("/{userId}/orders")
+    public ResponseEntity<?> getUserOrders(
             @PathVariable Long userId,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String type,
             @PageableDefault(size = 10) Pageable pageable) {
-        List<Order> orders = orderService.getUserOrders(userId, status, type, pageable);
-        return ResponseEntity.ok(orders);
+
+        try {
+            List<OrderDTO> result = new LinkedList<>();
+            for (Order order : orderService.getUserOrders(userId)) {
+                result.add(new OrderDTO(order));
+            }
+            return ResponseEntity.ok(result);                        //Возвращаем DTO с HTTP 200
+
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+    }
+
+    @GetMapping("/{userId}/search")
+    public ResponseEntity<?> getOrdersByUserIdAndTypeAndStatus(
+            @PathVariable Long userId,
+            @RequestParam(required = false) String type,
+            @RequestParam(required = false) String status) {
+
+        try {
+            List<OrderDTO> result = new LinkedList<>();
+            for (Order order : orderService.getOrdersByUserIdAndTypeAndStatus(userId, type, status)) {
+                result.add(new OrderDTO(order));
+            }
+            return ResponseEntity.ok(result);                        //Возвращаем DTO с HTTP 200
+
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
     }
 
 //POST
@@ -62,8 +95,8 @@ public class UsernameController {
     @PostMapping("/register")    //я не понимаю, как я буду работать в системе, если не знаю свой ID
     public ResponseEntity<?> createUsername(@RequestBody Username username) {
         try {
-            UsernameDTO user = usernameService.registerUsername(username);
-            return ResponseEntity.ok(user);
+            Username user = usernameService.registerUsername(username);
+            return ResponseEntity.ok(new UsernameDTO(user));
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
