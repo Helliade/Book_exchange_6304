@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:replace="${title}">История заказов</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+</head>
+<body>
+<div th:replace="~{layouts/main :: body(~{::title}, ~{::#content})}"></div>
+
+<!-- Навигационная панель -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container">
+        <a class="navbar-brand" th:href="@{/}">КнигоОбмен</a>
+        <div class="collapse navbar-collapse">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/catalog}">Каталог</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/history}">История заказов</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/korzina}">Корзина</a>
+                </li>
+            </ul>
+            <ul class="navbar-nav">
+                <li class="nav-item" th:authorize="isAuthenticated()">
+                    <a class="nav-link" th:href="@{/logout}">Выйти</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+
+<div id="content">
+    <div class="row">
+        <div class="col-md-8">
+            <!-- История заказов -->
+            <div class="tab-pane fade show active p-3" id="orders" role="tabpanel" aria-labelledby="orders-tab">
+                <div th:if="${#lists.isEmpty(orders)}" class="alert alert-info">
+                    У вас пока нет заказов
+                </div>
+                <div th:unless="${#lists.isEmpty(orders)}" class="list-group">
+                    <a th:each="order : ${orders}" th:href="@{/orders/{id}(id=${order.id})}"
+                       class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h5 class="mb-1" th:text="${'Заказ #' + order.id}">Заказ #1</h5>
+                            <small th:text="${#temporals.format(order.dateCreated, 'dd.MM.yyyy HH:mm')}">01.01.2025</small>
+                        </div>
+                        <p class="mb-1" th:text="${'Статус: ' + order.status}">Статус: COMPLETED</p>
+                        <p class="mb-1" th:text="${'Книга: ' + order.status}">Книга: Пятачок</p>     <!-- как книгу через заказу помянть? -->
+                        <p class="mb-1" th:text="${'Give/Take: ' + order.type}">Give/Take: Give</p>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
