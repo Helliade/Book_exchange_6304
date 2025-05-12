@@ -97,7 +97,23 @@ public class Book {
         this.status = status;
     }
 
+    public Set<Order> getOrders() {
+        return orders;
+    }
+    public Set<Work> getWorks() {
+        return works;
+    }
 
+    // Дополнительные методы для удобной работы с коллекцией
+    public void addOrder(Order order) {
+        this.orders.add(order);
+        order.getBooks().add(this); // Обновляем обратную связь
+    }
+
+    public void removeOrder(Order order) {
+        this.orders.remove(order);
+        order.getBooks().remove(this); // Обновляем обратную связь
+    }
 
 
 

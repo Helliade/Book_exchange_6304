@@ -1,20 +1,27 @@
 package com.example.demo.Controller;
 
+import com.example.demo.DTO.OrderDTO;
+import com.example.demo.DTO.WorkDTO;
+import com.example.demo.Models.Order;
 import com.example.demo.Models.Work;
 import com.example.demo.service.WorkService;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.LinkedList;
 import java.util.List;
 
-//        GET    /api/works             - Получить все произведения
-//        GET    /api/works/{id}        - Получить произведение по ID
-//        POST   /api/works             - Создать новое произведение
-//        PUT    /api/works/{id}        - Обновить произведение
-//        DELETE /api/works/{id}        - Удалить произведение
-//  ?      GET    /api/works?genre=Novel - Фильтрация по жанру
-//  ?      GET    /api/works/search?q=   - Поиск по названию/автору
-//  !!!!      GET    /api/works/{id}/books  - Получить все книги произведения
+//  #      GET    /api/works             - Получить все произведения
+//  #      GET    /api/works/{workId}        - Получить произведение по ID
+//  #      POST   /api/works             - Создать новое произведение
+//  #      PUT    /api/works/{workId}        - Обновить произведение
+//  #      DELETE /api/works/{workId}        - Удалить произведение
+//  #?      GET    /api/works?genre=Novel - Фильтрация по жанру
+//  #?      GET    /api/works/search?q=   - Поиск по названию/автору
+//  #!!!!      GET    /api/works/{workId}/books  - Получить все книги произведения
 
 @RestController
 @RequestMapping("/api/works")
@@ -29,16 +36,29 @@ public class WorkController {
         this.workService = workService;
     }
 
+
+
 //GET
     @GetMapping
-    public List<Work> getAllWorks() {
-        return workService.getAllWorks();
+    public ResponseEntity<?> getAllWorks() {
+        try {
+            List<WorkDTO> result = new LinkedList<>();
+            for (Work work : workService.getAllWorks()) {
+                result.add(new WorkDTO(work));
+            }
+            return ResponseEntity.ok(result);
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
     }
 
-
-    @GetMapping("/{id}")
-    public Work getWorkById(@PathVariable Long id) {
-        return workService.getWorkById(id);
+    @GetMapping("/{workId}")
+    public ResponseEntity<?> getWorkById(@PathVariable Long workId) {
+        try {
+            return ResponseEntity.ok(new WorkDTO(workService.getWorkById(workId)));
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
     }
 
 //POST
@@ -48,16 +68,16 @@ public class WorkController {
     }
 
 //PUT
-    @PutMapping("/{id}")
-    public Work updateWork(@PathVariable Long id, @RequestBody Work work) {
-        work.setId(id);
+    @PutMapping("/{workId}")
+    public Work updateWork(@PathVariable Long workId, @RequestBody Work work) {
+        work.setId(workId);
         return workService.updateWork(work);
     }
 
 //DELETE
-    @DeleteMapping("/{id}")
-    public void deleteWork(@PathVariable Long id) {
-        workService.deleteWork(id);
+    @DeleteMapping("/{workId}")
+    public void deleteWork(@PathVariable Long workId) {
+        workService.deleteWork(workId);
     }
 }
 

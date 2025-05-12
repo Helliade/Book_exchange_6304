@@ -30,7 +30,7 @@ CREATE TABLE Book_Creation (
   Book_id BIGINT REFERENCES Book(id),
   Creation_id BIGINT REFERENCES Creation(id),
   PRIMARY KEY (Book_id, Creation_id)
-);      -- Надежная связь между студентом и курсом
+);
 
 CREATE TABLE Creation (
     id BIGINT PRIMARY KEY,
