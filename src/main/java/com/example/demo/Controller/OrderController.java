@@ -13,14 +13,14 @@ import java.util.LinkedList;
 import java.util.List;
 
 //        GET    /api/orders                     - Получить все заказы
-//        GET    /api/orders/{userId}            - Получить заказ по ID пользователя
+//        GET    /api/orders/{orderId}           - Получить заказ по ID
 //        GET    /api/orders/search              - Фильтрация по типу и/или статусу (у пользователя в UsernameContr...)
 //   ???#     POST   /api/orders                     - Создать новый заказ
 //        POST   /api/orders/{id}/books          - Добавить книгу в заказ
-//   ?#     PUT    /api/orders/{id}                - Обновить заказ
+//   ----     PUT    /api/orders/{id}                - Обновить заказ
 //        PATCH  /api/orders/{id}/status         - Изменить статус заказа
-//   #     DELETE /api/orders/{id}                - Удалить заказ
-//   !!!!#     DELETE /api/orders/{id}/books - Удалить книгу из заказа
+//        DELETE /api/orders/{id}                - Удалить заказ
+//        DELETE /api/orders/{orderId}/books     - Удалить книгу из заказа
 
 
 @RestController
@@ -36,28 +36,36 @@ public class OrderController {
 
 //GET
     @GetMapping
-    public List<OrderDTO> getAllOrders() {
-        List<OrderDTO> result = new LinkedList<>();
-        for (Order order : orderService.getAllOrders()) {
-            result.add(new OrderDTO(order));
+    public ResponseEntity<?> getAllOrders() {
+        try {
+            List<OrderDTO> result = new LinkedList<>();
+            for (Order order : orderService.getAllOrders()) {
+                result.add(new OrderDTO(order));
+            }
+            return ResponseEntity.ok(result);
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
-        return result;
     }
 
 
-    @GetMapping("/{id}")
-    public OrderDTO getOrderById(@PathVariable Long id) {
-        return new OrderDTO(orderService.getOrderById(id));
+    @GetMapping("/{orderId}")
+    public ResponseEntity<?> getOrderById(@PathVariable Long orderId) {
+        try {
+            return ResponseEntity.ok(new OrderDTO(orderService.getOrderById(orderId)));
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
     }
 
     @GetMapping("/search")
-    public ResponseEntity<?> getOrdersByTypeAndStatus(
+    public ResponseEntity<?> getOrdersByArguments(
             @RequestParam(required = false) String type,
             @RequestParam(required = false) String status) {
 
         try {
             List<OrderDTO> result = new LinkedList<>();
-            for (Order order : orderService.getOrdersByTypeAndStatus(type, status)) {
+            for (Order order : orderService.getOrdersByArguments(type, status)) {
                 result.add(new OrderDTO(order));
             }
             return ResponseEntity.ok(result);                        //Возвращаем DTO с HTTP 200
@@ -104,11 +112,11 @@ public class OrderController {
     }
 
 //PUT
-    @PutMapping("/{id}")
-    public Order updateOrder(@PathVariable Long id, @RequestBody Order order) {
-        order.setId(id);
-        return orderService.updateOrder(order);
-    }
+//    @PutMapping("/{id}")
+//    public Order updateOrder(@PathVariable Long id, @RequestBody Order order) {
+//        order.setId(id);
+//        return orderService.updateOrder(order);
+//    }
 
 //PATCH
     @PatchMapping("/{orderId}/status")
@@ -128,11 +136,12 @@ public class OrderController {
     }
 
 //DELETE
-    @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteOrder(@PathVariable Long id) {
+//TODO удалить все связанные данные
+    @DeleteMapping("/{orderId}")
+    public ResponseEntity<?> deleteOrder(@PathVariable Long orderId) {
 
         try {
-            orderService.deleteOrder(id);
+            orderService.deleteOrder(orderId);
             return ResponseEntity.ok("Successful");
         } catch (EntityNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
@@ -140,8 +149,7 @@ public class OrderController {
     }
 
 
-    //TODO передать DTO
-    @DeleteMapping(value = "/{id}/books")
+    @DeleteMapping(value = "/{orderId}/books")
     public ResponseEntity<?> deleteBookFromOrder(
             @PathVariable Long orderId,
             @RequestParam Long bookId) {
@@ -168,15 +176,4 @@ public class OrderController {
 //        return ResponseEntity.status(HttpStatus.CREATED)
 //                .body(service.create(booking, userId));
 //    }
-//
-//    @PostMapping("/{bookingId}/books")
-//    public ResponseEntity<Booking> addBook(@PathVariable Long bookingId,
-//                                           @RequestParam Long bookId) {
-//        return ResponseEntity.ok(service.addBookToBooking(bookingId, bookId));
-//    }
-//
-//    @PatchMapping("/{id}/status")
-//    public ResponseEntity<Booking> updateStatus(@PathVariable Long id,
-//                                                @RequestBody Map<String, String> status) {
-//        return ResponseEntity.ok(service.updateStatus(id, status.get("status")));
-//    }
+

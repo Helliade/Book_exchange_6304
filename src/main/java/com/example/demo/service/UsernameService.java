@@ -2,8 +2,8 @@ package com.example.demo.service;
 
 import com.example.demo.Models.Username;
 import com.example.demo.repository.UsernameRepository;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
-//import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,14 +43,15 @@ public class UsernameService {
 
 
     @Transactional
-    public Username registerUsername(Username username) {
+    public Username registerUsername(String login, String password) {
         // Проверка существования пользователя
-        if (usernameRepository.findByLogin(username.getLogin()) != null) {
+        if (usernameRepository.findByLogin(login) != null) {
             throw new RuntimeException("Пользователь с таким логином уже существует");
         }
 
         // Создание нового пользователя
-        username.setPassword(username.getPassword());                 //passwordEncoder.encode(username.getPassword())); // Хеширование пароля
+        Username username = new Username(login, password);
+        //passwordEncoder.encode(password); // Хеширование пароля
         return usernameRepository.save(username);
     }
 
@@ -65,17 +66,20 @@ public class UsernameService {
         return rawPassword.equals(user.getPassword());         //passwordEncoder.matches(rawPassword, user.getPassword()); //метод проверяет, соответсвует ли пароль
     }                                                                               //пользователя хешу, хранящимуся в БД
 
-    //TODO Обновление пользователя   !!!!
-    public Username updateUsername(Username username) {
-        return usernameRepository.save(username);
-    }
+//    //TODO Обновление пользователя   !!!!
+//    public Username updateUsername(Username username) {
+//        return usernameRepository.save(username);
+//    }
 
     //Удаление пользователя
-    public void deleteUsername(Long id) {
-        usernameRepository.deleteById(id);
+    public void deleteUsername(Long userId) {
+
+        usernameRepository.findById(userId)                           //находим user-a
+                .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + userId));
+        usernameRepository.deleteById(userId);
     }
 }
-//
+
 //@Service
 //public class UsernameService {
 //
@@ -107,9 +111,3 @@ public class UsernameService {
 //        usernameRepository.save(username);
 //    }
 //}
-
-//Ключевые изменения:
-//  Добавила проверку существования пользователя при регистрации.
-//  Создала метод смены пароля с дополнительной проверкой.
-//  Использовала BCryptPasswordEncoder для безопасного хеширования паролей.
-//  Создала репозиторий с методом поиска по логину.

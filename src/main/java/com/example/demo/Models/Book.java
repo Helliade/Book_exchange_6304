@@ -100,6 +100,9 @@ public class Book {
     public Set<Order> getOrders() {
         return orders;
     }
+    public Set<Work> getWorks() {
+        return works;
+    }
 
     // Дополнительные методы для удобной работы с коллекцией
     public void addOrder(Order order) {

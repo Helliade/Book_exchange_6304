@@ -30,7 +30,7 @@ public class BookShortDTO {
 
     @Override
     public String toString() {
-        return "BooksDTO{" +
+        return "BookShortDTO{" +
                 "id=" + id +
                 ", language='" + language + '\'' +
                 ", condition='" + condition +

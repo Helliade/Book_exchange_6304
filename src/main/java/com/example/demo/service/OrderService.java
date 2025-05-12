@@ -45,7 +45,11 @@ public class OrderService {
 
     //Получение списка всех заказов
     public List<Order> getAllOrders() {
-        return orderRepository.findAll();
+        List<Order> orders = orderRepository.findAll();
+        if (orders.isEmpty()) {
+            throw new EntityNotFoundException("No orders found.");
+        }
+        return orders;
     }
 
     public List<Order> getOrdersByUser(Username user) {
@@ -53,8 +57,9 @@ public class OrderService {
     }
 
     //Получение заказа по ID
-    public Order getOrderById(Long id) {
-        return orderRepository.findById(id).orElse(null);
+    public Order getOrderById(Long orderId) {
+        return orderRepository.findById(orderId)
+                .orElseThrow(() -> new EntityNotFoundException("Order not found with id: " + orderId));
     }
 
     public Order getOrderWithBooksById(Long id) {
@@ -78,13 +83,10 @@ public class OrderService {
         orderRepository.deleteById(orderId);
     }
 
-
+//TODO при переходе из статуса корзины нужно создать новую корзину
     public Order updateOrderStatus(Long orderId, String newStatus) {
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "Order not found with id: " + orderId
-                ));
+                .orElseThrow(() -> new IllegalArgumentException("Order not found with id: " + orderId));
 
         try {
             OrderValidator.validateStatusTransition(order.getStatus(), newStatus);
@@ -154,7 +156,7 @@ public class OrderService {
         Book book = bookRepository.findById(bookId)                               //находим книгу
                 .orElseThrow(() -> new EntityNotFoundException("Book not found with id: " + bookId));
 
-        if (orderRepository.findBookIdsByBookingId(orderId).contains(bookId)) {   // Есть ли книга в заказе
+        if (!orderRepository.findBookIdsByBookingId(orderId).contains(bookId)) {   // Есть ли книга в заказе
             throw new IllegalStateException("Book not exists in the order");
         }
 
@@ -167,7 +169,7 @@ public class OrderService {
         return orderRepository.save(order);
     }
 
-    public List<Order> getOrdersByUserIdAndTypeAndStatus(Long userId,String type, String status) { // Подразумевается,
+    public List<Order> getOrdersByUserIdAndArguments(Long userId,String type, String status) { // Подразумевается,
         // что авторизированный пользователь выбирает на сайте один из возможных типов и/или статусов заказа
         // Поиск заказов
         List<Order> orders;
@@ -178,8 +180,7 @@ public class OrderService {
         } else if (status != null) {
             orders = orderRepository.findByUserIdAndStatus(userId, status);
         } else {
-            throw new IllegalArgumentException(
-                    "At least one parameter (type or status) must be provided");
+            orders = orderRepository.findByUserId(userId);
         }
 
         // Проверка результатов
@@ -192,14 +193,14 @@ public class OrderService {
         return orders;
     }
 
-    public List<Order> getOrdersByTypeAndStatus(String type, String status) {
+    public List<Order> getOrdersByArguments(String type, String status) {
 
         // Проверка статуса и типа (если переданы)
-        if (status != null && OrderValidator.isValidStatus(status)) {
+        if (status != null && !OrderValidator.isValidStatus(status)) {
             throw new IllegalArgumentException(
                     String.format("Invalid status: %s. Valid statuses: %s", status, OrderValidator.getValidStatuses()));
         }
-        if (status != null && OrderValidator.isValidType(type)) {
+        if (type != null && !OrderValidator.isValidType(type)) {
             throw new IllegalArgumentException(
                     String.format("Invalid type: %s. Valid types: %s", type, OrderValidator.getValidTypes()));
         }

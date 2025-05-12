@@ -80,6 +80,10 @@ public class Work {
         this.year = year;
     }
 
+    public Set<Book> getBooks() {
+        return books;
+    }
+
 
 
 

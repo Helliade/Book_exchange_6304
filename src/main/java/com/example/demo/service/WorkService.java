@@ -1,8 +1,10 @@
 package com.example.demo.service;
 
 
+import com.example.demo.Models.Order;
 import com.example.demo.Models.Work;
 import com.example.demo.repository.WorkRepository;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -20,7 +22,11 @@ public class WorkService {
 
     //Получение списка всех заказов
     public List<Work> getAllWorks() {
-        return workRepository.findAll();
+        List<Work> works = workRepository.findAll();
+        if (works.isEmpty()) {
+            throw new EntityNotFoundException("No works found.");
+        }
+        return works;
     }
 
     //Получение заказа по ID

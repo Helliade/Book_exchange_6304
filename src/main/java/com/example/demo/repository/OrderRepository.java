@@ -41,11 +41,9 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 //    @EntityGraph(attributePaths = {"books", "user"}) // Жадная загрузка связанных сущностей
 //    List<Order> findByStatus(String status, Pageable pageable);
 
-    @Query(value = """
-        SELECT bb.Book_id
-        FROM Booking_Book bb
-        WHERE bb.Booking_id = :orderId
-        """, nativeQuery = true)
+    @Query(value = "SELECT bb.Book_id " +
+            "FROM Booking_Book bb " +
+            "WHERE bb.Booking_id = :orderId", nativeQuery = true)
     List<Long> findBookIdsByBookingId(@Param("orderId") Long orderId);
 
     @EntityGraph(attributePaths = "books")

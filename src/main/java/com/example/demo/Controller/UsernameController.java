@@ -8,24 +8,22 @@ import com.example.demo.service.OrderService;
 import com.example.demo.service.UsernameService;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import org.springframework.data.domain.Pageable;
-import org.springframework.web.server.ResponseStatusException;
-
 import java.util.LinkedList;
 import java.util.List;
 
-//   #     GET    /api/users                   - Получить всех пользователей
-//   #     GET    /api/users/{id}              - Получить пользователя по ID
-//   #     GET    /api/users/{userId}/search   - Фильтрация заказов по типу и/или статусу у определенного пользователя
-//   #     POST   /api/users/register          - Создать нового пользователя
-//   #?     PUT/PATCH    /api/users/{id}           - Обновить пользователя
-//   #     DELETE /api/users/{id}              - Удалить пользователя
-//   #     POST   /api/users/login             - Аутентификация пользователя
+//        GET    /api/users                   - Получить всех пользователей
+//        GET    /api/users/{userId}          - Получить пользователя по ID
+//        GET    /api/users/{userId}/search   - Фильтрация заказов по типу и/или статусу у определенного пользователя
+//                                            + Вывод всех заказов
+//        POST   /api/users/register          - Создать нового пользователя
+//        POST   /api/users/login             - Аутентификация пользователя
+//   #-----     PUT/PATCH    /api/users/{userId}           - Обновить пользователя
+//        DELETE /api/users/{userId}          - Удалить пользователя
+
 
 @RestController
 @RequestMapping("/api/users")
@@ -42,49 +40,50 @@ public class UsernameController {
 
 //GET
     @GetMapping
-    public List<Username> getAllUsernames() {
-        return usernameService.getAllUsernames();
-    }
-
-    @GetMapping("/{id}")
-    public UsernameDTO getUsernameById(@PathVariable Long id) {
-        return new UsernameDTO(usernameService.getUsernameById(id));
-    }
-
-    @GetMapping("/{userId}/orders")
-    public ResponseEntity<?> getUserOrders(
-            @PathVariable Long userId,
-            @RequestParam(required = false) String status,
-            @RequestParam(required = false) String type,
-            @PageableDefault(size = 10) Pageable pageable) {
-
-        try {
-            List<OrderDTO> result = new LinkedList<>();
-            for (Order order : orderService.getUserOrders(userId)) {
-                result.add(new OrderDTO(order));
-            }
-            return ResponseEntity.ok(result);                        //Возвращаем DTO с HTTP 200
-
-        } catch (EntityNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+    public List<UsernameDTO> getAllUsernames() {
+        List<UsernameDTO> result = new LinkedList<>();
+        for (Username username : usernameService.getAllUsernames()) {
+            result.add(new UsernameDTO(username));
         }
+        return result;
     }
+
+    @GetMapping("/{userId}")
+    public UsernameDTO getUsernameById(@PathVariable Long userId) {
+        return new UsernameDTO(usernameService.getUsernameById(userId));
+    }
+
+//    @GetMapping("/{userId}/orders")
+//    public ResponseEntity<?> getUserOrders(
+//            @PathVariable Long userId,
+//            @RequestParam(required = false) String status,
+//            @RequestParam(required = false) String type) {
+//
+//        try {
+//            List<OrderDTO> result = new LinkedList<>();
+//            for (Order order : orderService.getUserOrders(userId)) {
+//                result.add(new OrderDTO(order));
+//            }
+//            return ResponseEntity.ok(result);                        //Возвращаем DTO с HTTP 200
+//
+//        } catch (EntityNotFoundException e) {
+//            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+//        }
+//    }
 
     @GetMapping("/{userId}/search")
-    public ResponseEntity<?> getOrdersByUserIdAndTypeAndStatus(
+    public ResponseEntity<?> getOrdersByUserIdAndArguments(
             @PathVariable Long userId,
             @RequestParam(required = false) String type,
             @RequestParam(required = false) String status) {
 
         try {
             List<OrderDTO> result = new LinkedList<>();
-            for (Order order : orderService.getOrdersByUserIdAndTypeAndStatus(userId, type, status)) {
+            for (Order order : orderService.getOrdersByUserIdAndArguments(userId, type, status)) {
                 result.add(new OrderDTO(order));
             }
             return ResponseEntity.ok(result);                        //Возвращаем DTO с HTTP 200
 
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
         } catch (EntityNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
@@ -92,10 +91,10 @@ public class UsernameController {
 
 //POST
 
-    @PostMapping("/register")    //я не понимаю, как я буду работать в системе, если не знаю свой ID
-    public ResponseEntity<?> createUsername(@RequestBody Username username) {
+    @PostMapping("/register")
+    public ResponseEntity<?> createUsername(String login, String rawPassword) {
         try {
-            Username user = usernameService.registerUsername(username);
+            Username user = usernameService.registerUsername(login, rawPassword);
             return ResponseEntity.ok(new UsernameDTO(user));
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
@@ -114,12 +113,13 @@ public class UsernameController {
 
 //PUT
 
-    //TODO переписать метод обновления пользователя
-    @PutMapping("/{id}")
-    public Username updateUsername(@PathVariable Long id, @RequestBody Username username) {
-        username.setId(id);
-        return usernameService.updateUsername(username);
-    }
+//    //TODO переписать метод обновления пользователя
+//    @PutMapping("/{userId}")
+//    public Username updateUsername(@PathVariable Long userId, @RequestBody Username username) {
+//        username.setId(userId);
+//        return usernameService.updateUsername(username);
+//    }
+
 //    @PutMapping("/{id}")
 //    public ResponseEntity<UsernameDTO> updateUsername(
 //            @PathVariable Long id,
@@ -131,9 +131,16 @@ public class UsernameController {
 
 
     //DELETE
-    @DeleteMapping("/{id}")
-    public void deleteUsername(@PathVariable Long id) {
-        usernameService.deleteUsername(id);
+    //TODO удалить все связанные данные
+    @DeleteMapping("/{userId}")
+    public ResponseEntity<?> deleteUsername(@PathVariable Long userId) {
+
+        try {
+            usernameService.deleteUsername(userId);
+            return ResponseEntity.ok("Successful");
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
     }
 }
 
@@ -247,14 +254,3 @@ public class UsernameController {
 //        return usernameService.registerUsername(username);
 //    }
 //}
-
-
-//Пояснения
-//   Путь "/users": базовый URL для данного контроллера. Вы можете изменить его в зависимости от ваших предпочтений.
-//   Метод /register принимает JSON с полями login и password и передаёт их в метод registerUser вашего сервиса.
-// При возникновении ошибки (например, если пользователь с таким логином уже существует) возвращается BAD_REQUEST с
-// сообщением ошибки.
-//   Метод /authenticate принимает данные для аутентификации (логин и пароль) и проверяет их с помощью метода
-// authenticate. В случае неверных данных возвращается статус UNAUTHORIZED.
-//   Метод /change-password принимает логин, старый пароль и новый пароль, выполняет аутентификацию и, если всё
-// верно, обновляет пароль пользователя.
