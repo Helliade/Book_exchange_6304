@@ -152,11 +152,12 @@ public class BookController {
     }
 
 //DELETE
-//TODO удалить все связанные данные
+
     @DeleteMapping("/{bookId}")
     public ResponseEntity<?> deleteBook(@PathVariable Long bookId) {
 
         try {
+            bookService.deleteBookLinkedData(bookId);
             bookService.deleteBook(bookId);
             return ResponseEntity.ok("Successful");
         } catch (EntityNotFoundException e) {

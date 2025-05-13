@@ -53,24 +53,6 @@ public class UsernameController {
         return new UsernameDTO(usernameService.getUsernameById(userId));
     }
 
-//    @GetMapping("/{userId}/orders")
-//    public ResponseEntity<?> getUserOrders(
-//            @PathVariable Long userId,
-//            @RequestParam(required = false) String status,
-//            @RequestParam(required = false) String type) {
-//
-//        try {
-//            List<OrderDTO> result = new LinkedList<>();
-//            for (Order order : orderService.getUserOrders(userId)) {
-//                result.add(new OrderDTO(order));
-//            }
-//            return ResponseEntity.ok(result);                        //Возвращаем DTO с HTTP 200
-//
-//        } catch (EntityNotFoundException e) {
-//            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-//        }
-//    }
-
     @GetMapping("/{userId}/search")
     public ResponseEntity<?> getOrdersByUserIdAndArguments(
             @PathVariable Long userId,
@@ -95,6 +77,7 @@ public class UsernameController {
     public ResponseEntity<?> createUsername(String login, String rawPassword) {
         try {
             Username user = usernameService.registerUsername(login, rawPassword);
+            orderService.createOrder(user);   //создаем первый заказ со статусом корзины
             return ResponseEntity.ok(new UsernameDTO(user));
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
@@ -113,13 +96,13 @@ public class UsernameController {
 
 //PUT
 
-//    //TODO переписать метод обновления пользователя
+//    //переписать метод обновления пользователя
 //    @PutMapping("/{userId}")
 //    public Username updateUsername(@PathVariable Long userId, @RequestBody Username username) {
 //        username.setId(userId);
 //        return usernameService.updateUsername(username);
 //    }
-
+//
 //    @PutMapping("/{id}")
 //    public ResponseEntity<UsernameDTO> updateUsername(
 //            @PathVariable Long id,
@@ -131,11 +114,12 @@ public class UsernameController {
 
 
     //DELETE
-    //TODO удалить все связанные данные
+
     @DeleteMapping("/{userId}")
     public ResponseEntity<?> deleteUsername(@PathVariable Long userId) {
 
         try {
+            usernameService.deleteUsernameLinkedData(userId);
             usernameService.deleteUsername(userId);
             return ResponseEntity.ok("Successful");
         } catch (EntityNotFoundException e) {
@@ -147,23 +131,6 @@ public class UsernameController {
 
 
 
-
-
-//import com.example.demo.Models.Username;
-//import com.example.demo.service.UsernameService;
-//import org.springframework.http.HttpStatus;
-//import org.springframework.http.ResponseEntity;
-//import org.springframework.web.bind.annotation.*;
-//
-//@RestController
-//@RequestMapping("/users")
-//public class UsernameController {
-//
-//    private final UsernameService usernameService;
-//
-//    public UsernameController(UsernameService usernameService) {
-//        this.usernameService = usernameService;
-//    }
 //
 //    // Эндпоинт для регистрации нового пользователя
 //    @PostMapping("/register")
@@ -196,61 +163,5 @@ public class UsernameController {
 //        } catch (RuntimeException e) {
 //            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
 //        }
-//    }
-//
-//    // DTO для регистрации
-//    public static class RegistrationRequest {
-//        private String login;
-//        private String password;
-//
-//        public RegistrationRequest() {
-//        }
-//
-//        public String getLogin() {
-//            return login;
-//        }
-//
-//        public void setLogin(String login) {
-//            this.login = login;
-//        }
-//
-//        public String getPassword() {
-//            return password;
-//        }
-//
-//        public void setPassword(String password) {
-//            this.password = password;
-//        }
-//    }
-//
-//    // DTO для аутентификации
-//    public static class AuthenticationRequest {
-//        private String login;
-//        private String password;
-//
-//        public AuthenticationRequest() {
-//        }
-//
-//        public String getLogin() {
-//            return login;
-//        }
-//
-//        public void setLogin(String login) {
-//            this.login = login;
-//        }
-//
-//        public String getPassword() {
-//            return password;
-//        }
-//
-//        public void setPassword(String password) {
-//            this.password = password;
-//        }
-//    }
-//
-
-//    @PostMapping("/register")
-//    public Username createUsername(@RequestBody Username username) {
-//        return usernameService.registerUsername(username);
 //    }
 //}

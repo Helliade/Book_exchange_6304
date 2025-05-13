@@ -44,7 +44,8 @@ public class OrderValidator {
             "CREATED", Set.of("IN_TRANSIT", "CANCELLED"),
             "IN_TRANSIT", Set.of("DELIVERY_READY", "CANCELLED"),
             "DELIVERY_READY", Set.of("COMPLETED", "CANCELLED"),
-            "COMPLETED", Set.of() // После COMPLETED нельзя изменить статус
+            "COMPLETED", Set.of(), // После COMPLETED нельзя изменить статус
+            "CANCELLED", Set.of() // После COMPLETED нельзя изменить статус
     );
 
     public static void validateStatusTransition(String currentStatus, String newStatus) {

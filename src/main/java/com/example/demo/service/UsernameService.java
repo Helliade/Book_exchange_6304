@@ -1,5 +1,7 @@
 package com.example.demo.service;
 
+import com.example.demo.Models.Book;
+import com.example.demo.Models.Order;
 import com.example.demo.Models.Username;
 import com.example.demo.repository.UsernameRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -17,12 +19,14 @@ import java.util.List;
 public class UsernameService {
 
     private final UsernameRepository usernameRepository;
+    private final OrderService orderService;
 //    private final BCryptPasswordEncoder passwordEncoder;
 
     @Autowired
-    public UsernameService(UsernameRepository usernameRepository){ //, BCryptPasswordEncoder passwordEncoder) {
+    public UsernameService(UsernameRepository usernameRepository, OrderService orderService){ //, BCryptPasswordEncoder passwordEncoder) {
         this.usernameRepository = usernameRepository;
 //        this.passwordEncoder = passwordEncoder;
+        this.orderService = orderService;
     }
 
     //Получение списка всех пользователей
@@ -66,17 +70,28 @@ public class UsernameService {
         return rawPassword.equals(user.getPassword());         //passwordEncoder.matches(rawPassword, user.getPassword()); //метод проверяет, соответсвует ли пароль
     }                                                                               //пользователя хешу, хранящимуся в БД
 
-//    //TODO Обновление пользователя   !!!!
+//    // Обновление пользователя   !!!!
 //    public Username updateUsername(Username username) {
 //        return usernameRepository.save(username);
 //    }
 
     //Удаление пользователя
     public void deleteUsername(Long userId) {
-
         usernameRepository.findById(userId)                           //находим user-a
                 .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + userId));
         usernameRepository.deleteById(userId);
+    }
+
+    //Удаление связанных с пользователем данных
+    public void deleteUsernameLinkedData(Long userId) {
+        Username username = usernameRepository.findById(userId)                           //находим user-a
+                .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + userId));
+
+        // Удаляем заказы у пользователя
+        for (Order order : orderService.getOrdersByUserIdAndArguments(userId, null, null)) {
+            orderService.deleteOrderLinkedData(order.getId());
+            orderService.deleteOrder(order.getId());
+        }
     }
 }
 

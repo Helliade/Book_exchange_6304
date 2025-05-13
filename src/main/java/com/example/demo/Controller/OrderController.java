@@ -3,6 +3,7 @@ package com.example.demo.Controller;
 import com.example.demo.DTO.OrderDTO;
 import com.example.demo.Models.Order;
 import com.example.demo.service.OrderService;
+import com.example.demo.service.UsernameService;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -15,11 +16,13 @@ import java.util.List;
 //        GET    /api/orders                     - Получить все заказы
 //        GET    /api/orders/{orderId}           - Получить заказ по ID
 //        GET    /api/orders/search              - Фильтрация по типу и/или статусу (у пользователя в UsernameContr...)
-//   ???#     POST   /api/orders                     - Создать новый заказ
-//        POST   /api/orders/{id}/books          - Добавить книгу в заказ
+//        POST   /api/orders/{userId}            - Создать новый заказ
+//        (создается при переходе прошлого заказа из статуса корзины в созданный заказ)
+//        POST   /api/orders/{orderId}/books     - Добавить книгу в заказ
 //   ----     PUT    /api/orders/{id}                - Обновить заказ
-//        PATCH  /api/orders/{id}/status         - Изменить статус заказа
-//        DELETE /api/orders/{id}                - Удалить заказ
+//        PATCH  /api/orders/{orderId}/status    - Изменить статус заказа
+//        PATCH  /api/orders/{orderId}/type      - Изменить тип заказа
+//        DELETE /api/orders/{orderId}           - Удалить заказ
 //        DELETE /api/orders/{orderId}/books     - Удалить книгу из заказа
 
 
@@ -28,10 +31,12 @@ import java.util.List;
 public class OrderController {
 
     private final OrderService orderService;
+    private final UsernameService usernameService;
 
     @Autowired
-    public OrderController(OrderService orderService) {
+    public OrderController(OrderService orderService, UsernameService usernameService) {
         this.orderService = orderService;
+        this.usernameService = usernameService;
     }
 
 //GET
@@ -78,19 +83,12 @@ public class OrderController {
     }
 
 //POST
-
-// TODO Передаем не сущность, а поля
-// Достаем из бд сущности книг и пользователей с необходимыми айди (или создаем?)
-// Создаем сами экземпляр заказа и записываем данные в присоединенные таблицы
-
-//Создание заказа - передаем сущность заказа со статусом корзины,
-//переводим статус в Создан, создаем новый заказ со статусом корзины
-    //TODO передать DTO
-    @PostMapping
-    public Order createOrder(@RequestBody Order order) {
-        orderService.updateOrderStatus(order.getId(), "CREATED");
-        Order newOrder = new Order("GIVE", "CART", order.getUser());
-        return orderService.createOrder(newOrder);
+    //Создание заказа - передаем сущность заказа со статусом корзины,
+    //переводим статус в Создан, создаем новый заказ со статусом корзины
+    //TODO
+    @PostMapping("/{userId}")
+    public ResponseEntity<?> createOrder(@PathVariable Long userId) {
+        return ResponseEntity.ok(new OrderDTO(orderService.createOrder(usernameService.getUsernameById(userId))));
     }
 
     @PostMapping(value = "/{orderId}/books")
@@ -119,6 +117,7 @@ public class OrderController {
 //    }
 
 //PATCH
+    //TODO может после обновления попробовать поискать заказ в статусе корзины (найдется лишний)
     @PatchMapping("/{orderId}/status")
     public ResponseEntity<?> updateOrderStatus(
         @PathVariable Long orderId,
@@ -135,12 +134,29 @@ public class OrderController {
         }
     }
 
+    @PatchMapping("/{orderId}/type")
+    public ResponseEntity<?> updateOrderType(
+            @PathVariable Long orderId,
+            @RequestParam String type) {
+
+        try {
+            Order updatedOrder = orderService.updateOrderType(orderId, type);
+            return ResponseEntity.ok(new OrderDTO(updatedOrder));                        //Возвращаем DTO с HTTP 200
+
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+    }
+
 //DELETE
-//TODO удалить все связанные данные
+
     @DeleteMapping("/{orderId}")
     public ResponseEntity<?> deleteOrder(@PathVariable Long orderId) {
 
         try {
+            orderService.deleteOrderLinkedData(orderId);
             orderService.deleteOrder(orderId);
             return ResponseEntity.ok("Successful");
         } catch (EntityNotFoundException e) {
