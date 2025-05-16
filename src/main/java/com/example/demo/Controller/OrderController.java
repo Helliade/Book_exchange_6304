@@ -8,6 +8,7 @@ import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.LinkedList;
@@ -41,6 +42,7 @@ public class OrderController {
 
 //GET
     @GetMapping
+    @PreAuthorize("@mySecurity.isAdmin(authentication.principal.user)")
     public ResponseEntity<?> getAllOrders() {
         try {
             List<OrderDTO> result = new LinkedList<>();
@@ -64,6 +66,7 @@ public class OrderController {
     }
 
     @GetMapping("/search")
+    @PreAuthorize("@mySecurity.isAdmin(authentication.principal.user)")
     public ResponseEntity<?> getOrdersByArguments(
             @RequestParam(required = false) String type,
             @RequestParam(required = false) String status) {
@@ -153,6 +156,7 @@ public class OrderController {
 //DELETE
 
     @DeleteMapping("/{orderId}")
+    @PreAuthorize("@mySecurity.isAdmin(authentication.principal.user)")
     public ResponseEntity<?> deleteOrder(@PathVariable Long orderId) {
 
         try {

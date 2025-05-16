@@ -1,16 +1,20 @@
 package com.example.demo.Controller;
 
+import com.example.demo.DTO.ChangePasswordDTO;
 import com.example.demo.DTO.OrderDTO;
 import com.example.demo.DTO.UsernameDTO;
 import com.example.demo.Models.Order;
 import com.example.demo.Models.Username;
 import com.example.demo.service.OrderService;
 import com.example.demo.service.UsernameService;
+import com.example.demo.models.UserModel;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
 
 import java.util.LinkedList;
 import java.util.List;
@@ -40,6 +44,7 @@ public class UsernameController {
 
 //GET
     @GetMapping
+    @PreAuthorize("@mySecurity.isAdmin(authentication.principal.user)")
     public List<UsernameDTO> getAllUsernames() {
         List<UsernameDTO> result = new LinkedList<>();
         for (Username username : usernameService.getAllUsernames()) {
@@ -49,6 +54,7 @@ public class UsernameController {
     }
 
     @GetMapping("/{userId}")
+    @PreAuthorize("@mySecurity.isAdmin(authentication.principal.user)")
     public UsernameDTO getUsernameById(@PathVariable Long userId) {
         return new UsernameDTO(usernameService.getUsernameById(userId));
     }
@@ -74,7 +80,7 @@ public class UsernameController {
 //POST
 
     @PostMapping("/register")
-    public ResponseEntity<?> createUsername(String login, String rawPassword) {
+    public ResponseEntity<?> createUsername(@RequestParam String login, @RequestParam String rawPassword) {
         try {
             Username user = usernameService.registerUsername(login, rawPassword);
             orderService.createOrder(user);   //создаем первый заказ со статусом корзины
@@ -85,12 +91,33 @@ public class UsernameController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> authenticateUser(String login, String rawPassword) {
-        boolean isAuthenticated = usernameService.authenticateUsername(login, rawPassword);
-        if (isAuthenticated) {
-            return ResponseEntity.ok("Authentication successful");
-        } else {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
+    public ResponseEntity<?> authenticateUser(@RequestParam String login, @RequestParam String rawPassword) {
+
+        try {
+            Username user = new Username(login, rawPassword);
+            String token = usernameService.verify(user);
+
+//            if ("failure".equals(token))
+//                throw new RuntimeException("Нет доступа");
+
+            return ResponseEntity.ok(new UserModel(token, user.getRole()));
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
+        }
+//        } catch (RuntimeException e) {
+//            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());}
+    }
+
+    // Эндпоинт для смены пароля
+    @PostMapping("/change-password")
+    public ResponseEntity<?> changePassword(@RequestBody ChangePasswordDTO request) {
+        try {
+            usernameService.changePassword(request.getOldPassword(), request.getNewPassword());
+            return ResponseEntity.ok("Password changed successfully");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
         }
     }
 
@@ -129,30 +156,6 @@ public class UsernameController {
 }
 
 
-
-
-//
-//    // Эндпоинт для регистрации нового пользователя
-//    @PostMapping("/register")
-//    public ResponseEntity<?> registerUser(@RequestBody RegistrationRequest request) {
-//        try {
-//            Username user = usernameService.registerUser(request.getLogin(), request.getPassword());
-//            return ResponseEntity.ok(user);
-//        } catch (RuntimeException e) {
-//            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-//        }
-//    }
-//
-//    // Эндпоинт для аутентификации пользователя
-//    @PostMapping("/authenticate")
-//    public ResponseEntity<?> authenticateUser(@RequestBody AuthenticationRequest request) {
-//        boolean isAuthenticated = usernameService.authenticate(request.getLogin(), request.getPassword());
-//        if (isAuthenticated) {
-//            return ResponseEntity.ok("Authentication successful");
-//        } else {
-//            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
-//        }
-//    }
 //
 //    // Эндпоинт для смены пароля
 //    @PostMapping("/change-password")
