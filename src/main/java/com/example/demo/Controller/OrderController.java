@@ -24,12 +24,14 @@ import java.util.List;
 
 
 @RestController
-@RequestMapping("/api/orders")
+@RequestMapping("/api/orders")                                             //это аннотация Spring, которая связывает HTTP-запрос
+                                                                           // (URL + метод) с конкретным методом Java-класса
+                                                                           //(контроллера).Метка в коде/инструкция
 public class OrderController {
 
     private final OrderService orderService;
 
-    @Autowired
+    @Autowired                                                            //автоматическая инициализация
     public OrderController(OrderService orderService) {
         this.orderService = orderService;
     }

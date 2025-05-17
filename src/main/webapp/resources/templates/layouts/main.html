@@ -75,9 +75,11 @@
         <div class="col-md-2">
             <select class="form-select" name="condit">
                 <option value="">Все состояния</option>
-                <option th:each="cond : ${T(com.example.demo.service.BookValidator).getValidCondit()}"
+                <option th:each="cond : ${validCondit}"
                         th:value="${cond}"
-                        th:text="${#strings.capitalize(cond.replace('_', ' ').toLowerCase())}"
+                        th:text="${cond == 'PERFECT' ? 'Отличное' :
+                         cond == 'HAS_FLAWS' ? 'Есть дефекты' :
+                         'Повреждённая'}"
                         th:selected="${param.condit == cond}">
                 </option>
             </select>

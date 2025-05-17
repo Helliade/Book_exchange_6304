@@ -27,7 +27,9 @@ import java.util.List;
 //        DELETE /api/books/{bookId}/creations       - Удалить произведение из книги
 
 @RestController
-@RequestMapping("/api/books")
+@RequestMapping("/api/books")                                               //это аннотация Spring, которая связывает HTTP-запрос
+                                                                            // (URL + метод) с конкретным методом Java-класса
+                                                                            //(контроллера).Метка в коде/инструкция
 public class BookController {
 
     private final BookService bookService;
@@ -138,8 +140,8 @@ public class BookController {
     @PatchMapping("/{id}/change")
     public ResponseEntity<?> updateBookArguments(
             @PathVariable Long bookId,
-            @RequestParam String status,
-            @RequestParam String condit) {
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String condit) {
 
         try {
             return ResponseEntity.ok(new BookDTO(bookService.updateBookArguments(bookId, status, condit)));                        //Возвращаем DTO с HTTP 200

@@ -24,7 +24,9 @@ import java.util.List;
 //  #!!!!      GET    /api/works/{workId}/books  - Получить все книги произведения
 
 @RestController
-@RequestMapping("/api/works")
+@RequestMapping("/api/works")                                                 //это аннотация Spring, которая связывает HTTP-запрос
+                                                                              // (URL + метод) с конкретным методом Java-класса
+                                                                              //(контроллера).Метка в коде/инструкция
 public class WorkController {
 
 
