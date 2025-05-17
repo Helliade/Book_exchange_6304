@@ -71,7 +71,7 @@ public class OrderController {
         }
     }
 
-    @GetMapping("/search")
+    @GetMapping("/search")                                                 //только админ может вызывать
     @PreAuthorize("@mySecurity.isAdmin(authentication.principal.user)")
     public ResponseEntity<?> getOrdersByArguments(
             @RequestParam(required = false) String type,

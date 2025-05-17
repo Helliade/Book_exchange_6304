@@ -50,7 +50,8 @@
                         <div class="d-flex w-100 justify-content-between">
                             <h5 class="mb-1" th:text="${'Заказ #' + order.id}">Заказ #1</h5>
                             <small th:text="${#temporals.format(order.dateCreated, 'dd.MM.yyyy HH:mm')}">01.01.2025</small>
-                        </div>
+                        </
+                        div>
                         <p class="mb-1" th:text="${'Статус: ' + order.status}">Статус: COMPLETED</p>
                         <p class="mb-1" th:text="${'Книга: ' + order.status}">Книга: Пятачок</p>     <!-- как книгу через заказу помянть? -->
                         <p class="mb-1" th:text="${'Give/Take: ' + order.type}">Give/Take: Give</p>
