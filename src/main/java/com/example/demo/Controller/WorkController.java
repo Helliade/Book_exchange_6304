@@ -26,8 +26,9 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/works")
-public class WorkController {
-
+public class WorkController {                       //это аннотация Spring, которая связывает HTTP-запрос
+                                                    // (URL + метод) с конкретным методом Java-класса
+                                                    //(контроллера).Метка в коде/инструкция
 
     private final WorkService workService;
 

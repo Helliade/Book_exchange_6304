@@ -29,7 +29,10 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/books")
-public class BookController {
+public class BookController {                       //это аннотация Spring, которая связывает HTTP-запрос
+                                                    // (URL + метод) с конкретным методом Java-класса
+                                                    //(контроллера).Метка в коде/инструкция
+
 
     private final BookService bookService;
 

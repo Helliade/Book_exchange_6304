@@ -29,7 +29,9 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/orders")
-public class OrderController {
+public class OrderController {                      //это аннотация Spring, которая связывает HTTP-запрос
+                                                    // (URL + метод) с конкретным методом Java-класса
+                                                    //(контроллера).Метка в коде/инструкция
 
     private final OrderService orderService;
     private final UsernameService usernameService;
