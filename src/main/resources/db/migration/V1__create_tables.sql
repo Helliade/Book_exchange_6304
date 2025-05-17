@@ -4,8 +4,6 @@ CREATE TABLE Username (
     password VARCHAR(255) NOT NULL
 );
 
-
-
 CREATE TABLE Booking (
     id BIGINT PRIMARY KEY,
     type VARCHAR(50) NOT NULL CHECK (type IN ('GIVE', 'TAKE')),
