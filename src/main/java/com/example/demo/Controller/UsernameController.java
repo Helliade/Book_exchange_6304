@@ -109,15 +109,10 @@ public class UsernameController {
             Username user = new Username(login, rawPassword);
             String token = usernameService.verify(user);
 
-//            if ("failure".equals(token))
-//                throw new RuntimeException("Нет доступа");
-
             return ResponseEntity.ok(new UserModel(token, user.getRole()));
         } catch (EntityNotFoundException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
         }
-//        } catch (RuntimeException e) {
-//            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());}
     }
 
 

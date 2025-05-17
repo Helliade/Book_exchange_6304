@@ -20,12 +20,12 @@ import java.util.Date;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
+                                                                               //передаются через конструктор (Dependency Injection).
+    private final JwtService jwtService;                      // Сервис для работы с JWT (генерация/проверка)
 
-    private final JwtService jwtService;
+    private TokenUsageService tokenUsageService;             // Сервис для отслеживания использованных токенов
 
-    private TokenUsageService tokenUsageService;
-
-    private final UserDetailsService userDetailsService;
+    private final UserDetailsService userDetailsService;        // Загружает данные пользователя из БД
 
     public JwtAuthenticationFilter(JwtService jwtService, TokenUsageService tokenUsageService, UserDetailsService userDetailsService) {
         this.jwtService = jwtService;
@@ -46,20 +46,23 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         final String authHedear = request.getHeader("Authorization");  //Ищет заголовок Authorization с префиксом Bearer
 
-        if (authHedear == null || !authHedear.startsWith("Bearer")) {
+        if (authHedear == null || !authHedear.startsWith("Bearer")) {    //Если его нет или он не начинается с Bearer —
+                                                                        // пропускаем запрос дальше (но пользователь не аутентифицирован).
             filterChain.doFilter(request,response);
             return;
         }
 
-        final String jwt = authHedear.substring(7); //Удаляет "Bearer "
+        final String jwt = authHedear.substring(7); //Извлекаем токен,  Удаляя "Bearer "
 
         // Проверяем, не использовался ли токен ранее
         if (tokenUsageService.isTokenUsed(jwt)) {
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token already used");
             return;
         }
-
-        if (!jwtService.isTokenValid(jwt)) {
+        //Проверяем валидность токена
+        if (!jwtService.isTokenValid(jwt)) {                                         //jwtService проверяет:
+                                                                                   //Не истёк ли срок действия токена.
+                                                                                   //Правильная ли подпись.
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid token");
             return;
         }
