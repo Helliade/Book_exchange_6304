@@ -63,11 +63,11 @@ public class SecurityConfig {
                 }))
                 .authorizeHttpRequests(
                         request -> request
-                                .requestMatchers("/api/users/login", "/api/users/register",
-                                        "/api/users/change-password").permitAll()  //метод доступен всем
+                                .requestMatchers("/api/users/login",
+                                        "/api/users/register").permitAll()  //метод доступен всем
 
-//                                .anyRequest().permitAll()
-                                .anyRequest().authenticated() //остальные методы доступны после авторизации
+                                .anyRequest().permitAll()
+//                                .anyRequest().authenticated() //остальные методы доступны после авторизации
                 )
 
                 .addFilterBefore(jwtAuthenticationFilter,

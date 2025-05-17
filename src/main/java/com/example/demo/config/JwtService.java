@@ -31,7 +31,7 @@ public class JwtService {
                 .subject(userDetails.getUsername())
                 .issuer("DCB")
                 .issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis() + 50000))  //50 секунд
+                .expiration(new Date(System.currentTimeMillis() + 10000))  //10 секунд
                 .signWith(secretKey) // Используем предварительно созданный ключ
                 .compact();
     }
@@ -41,7 +41,7 @@ public class JwtService {
                 .subject(user.getLogin())
                 .issuer("DCB")
                 .issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis() + 50000))  //50 секунд
+                .expiration(new Date(System.currentTimeMillis() + 10000))  //10 секунд
                 .signWith(secretKey) // Используем предварительно созданный ключ
                 .compact();
     }
@@ -56,7 +56,6 @@ public class JwtService {
                 .getSubject();
     }
 
-    // Проверка токена
     // Проверка токена
     public boolean isTokenValid(String token) {
         try {
