@@ -28,16 +28,20 @@ import java.util.List;
 
 
 @RestController
-@RequestMapping("/api/orders")
-public class OrderController {                      //это аннотация Spring, которая связывает HTTP-запрос
-                                                    // (URL + метод) с конкретным методом Java-класса
-                                                    //(контроллера).Метка в коде/инструкция
+
+@RequestMapping("/api/orders")                                             //это аннотация Spring, которая связывает HTTP-запрос
+                                                                           // (URL + метод) с конкретным методом Java-класса
+                                                                           //(контроллера).Метка в коде/инструкция
+public class OrderController {
+
 
     private final OrderService orderService;
     private final UsernameService usernameService;
 
+
     @Autowired
     public OrderController(OrderService orderService, UsernameService usernameService) {
+
         this.orderService = orderService;
         this.usernameService = usernameService;
     }

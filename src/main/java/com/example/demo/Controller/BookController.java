@@ -28,11 +28,10 @@ import java.util.List;
 //        DELETE /api/books/{bookId}/creations       - Удалить произведение из книги
 
 @RestController
-@RequestMapping("/api/books")
-public class BookController {                       //это аннотация Spring, которая связывает HTTP-запрос
-                                                    // (URL + метод) с конкретным методом Java-класса
-                                                    //(контроллера).Метка в коде/инструкция
-
+@RequestMapping("/api/books")                                               //это аннотация Spring, которая связывает HTTP-запрос
+                                                                            // (URL + метод) с конкретным методом Java-класса
+                                                                            //(контроллера).Метка в коде/инструкция
+public class BookController {
 
     private final BookService bookService;
 

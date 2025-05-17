@@ -34,11 +34,11 @@ import java.util.List;
 
 
 @RestController
-@RequestMapping("/api/users")
-public class UsernameController {                       //это аннотация Spring, которая связывает HTTP-запрос
-                                                        // (URL + метод) с конкретным методом Java-класса
-                                                        //(контроллера).Метка в коде/инструкция
 
+@RequestMapping("/api/users")                                           //это аннотация Spring, которая связывает HTTP-запрос
+                                                                        // (URL + метод) с конкретным методом Java-класса
+                                                                        //(контроллера).Метка в коде/инструкция
+public class UsernameController {
 
     private final UsernameService usernameService;
     private final OrderService orderService;
