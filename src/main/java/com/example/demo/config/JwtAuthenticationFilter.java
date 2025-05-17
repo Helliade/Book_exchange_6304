@@ -7,7 +7,6 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -20,12 +19,12 @@ import java.util.Date;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
-                                                                               //передаются через конструктор (Dependency Injection).
-    private final JwtService jwtService;                      // Сервис для работы с JWT (генерация/проверка)
 
-    private TokenUsageService tokenUsageService;             // Сервис для отслеживания использованных токенов
+    private final JwtService jwtService;
 
-    private final UserDetailsService userDetailsService;        // Загружает данные пользователя из БД
+    private final TokenUsageService tokenUsageService;
+
+    private final UserDetailsService userDetailsService;
 
     public JwtAuthenticationFilter(JwtService jwtService, TokenUsageService tokenUsageService, UserDetailsService userDetailsService) {
         this.jwtService = jwtService;
@@ -34,85 +33,82 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+    protected void doFilterInternal(HttpServletRequest request,
+                                    HttpServletResponse response,
+                                    FilterChain filterChain)
+            throws ServletException, IOException {
 
-//TODO заключить все в трай кэтч ?
-        String path = request.getRequestURI();
-        if (path.startsWith("/api/users/login")) {
-            filterChain.doFilter(request, response); // Пропускаем без проверки JWT
-            return;
+        try {
+            // 1. Пропускаем публичные эндпоинты
+            String path = request.getRequestURI();
+            if (path.startsWith("/api/users/login") ||
+                    path.startsWith("/api/users/register")) {
+                filterChain.doFilter(request, response);
+                return;
+            }
+
+            // 2. Проверяем наличие токена
+            final String authHeader = request.getHeader("Authorization");
+            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Missing or invalid Authorization header");
+                return; // А что он возвращает???
+            }
+
+            // 3. Извлекаем токен
+            final String jwt = authHeader.substring(7);
+
+            // 4. Проверяем валидность токена
+            if (!jwtService.isTokenValid(jwt)) {
+                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid token");
+                return;
+            }
+
+            // 5. Проверяем, не использовался ли токен ранее
+            if (tokenUsageService.isTokenUsed(jwt)) {
+                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token already used");
+                return;
+            }
+
+            // 6. Извлекаем данные пользователя
+            String username = jwtService.extractUsername(jwt);
+            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+
+            // 7. Создаем аутентификацию
+            UsernamePasswordAuthenticationToken authenticationToken =
+                    new UsernamePasswordAuthenticationToken(
+                            userDetails,
+                            null,
+                            userDetails.getAuthorities());
+
+            authenticationToken.setDetails(
+                    new WebAuthenticationDetailsSource().buildDetails(request)
+            );
+
+            // 8. Устанавливаем аутентификацию в контекст
+            SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+
+            // 9. Помечаем токен как использованный
+            Date expiry = Jwts.parser()
+                    .setSigningKey(jwtService.getSecretKey())
+                    .build()
+                    .parseClaimsJws(jwt)
+                    .getBody()
+                    .getExpiration();
+            tokenUsageService.markTokenAsUsed(jwt, expiry);
+
+            // 10. Генерируем новый токен
+            String newToken = jwtService.generateToken(userDetails);
+            response.setHeader("New-Access-Token", newToken);
+
+
+            // 11. Продолжаем цепочку фильтров
+            filterChain.doFilter(request, response);
+
+        } catch (Exception e) {
+            // Обработка непредвиденных ошибок
+            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                    "Authentication failed: " + e.getMessage());
         }
-
-
-        final String authHedear = request.getHeader("Authorization");  //Ищет заголовок Authorization с префиксом Bearer
-
-        if (authHedear == null || !authHedear.startsWith("Bearer")) {    //Если его нет или он не начинается с Bearer —
-                                                                        // пропускаем запрос дальше (но пользователь не аутентифицирован).
-            filterChain.doFilter(request,response);
-            return;
-        }
-
-        final String jwt = authHedear.substring(7); //Извлекаем токен,  Удаляя "Bearer "
-
-        // Проверяем, не использовался ли токен ранее
-        if (tokenUsageService.isTokenUsed(jwt)) {
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token already used");
-            return;
-        }
-        //Проверяем валидность токена
-        if (!jwtService.isTokenValid(jwt)) {                                         //jwtService проверяет:
-                                                                                   //Не истёк ли срок действия токена.
-                                                                                   //Правильная ли подпись.
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid token");
-            return;
-        }
-
-        String username = jwtService.extractUsername(jwt);       //Декодирует логин из токена
-        UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-
-        // Помечаем токен как использованный
-        Date expiry = Jwts.parser()
-                .setSigningKey(jwtService.getSecretKey())
-                .build()
-                .parseClaimsJws(jwt)
-                .getBody()
-                .getExpiration();
-        tokenUsageService.markTokenAsUsed(jwt, expiry);
-
-        // Создаем новый токен для следующего запроса
-        String newToken = jwtService.generateToken(userDetails);
-        response.setHeader("New-Access-Token", newToken);
-
-
-
-
-
-
-
-
-
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
-        if (username != null && authentication == null){  //Аутентификация пользователя
-
-             if (jwtService.isTokenValid(jwt)) {
-                 UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(  //Создает объект аутентификации
-                         userDetails,
-                         null, userDetails.getAuthorities());
-
-                 authenticationToken.setDetails(
-                         new WebAuthenticationDetailsSource()
-                                 .buildDetails(request)
-                 );
-                 // Сохраняет аутентификацию в SecurityContext
-                 SecurityContextHolder.getContext().setAuthentication(authenticationToken);
-             }
-        }
-        filterChain.doFilter(request,response);
     }
-
-//    public String getLogin() {
-//        return login;
-//    }
 }
 

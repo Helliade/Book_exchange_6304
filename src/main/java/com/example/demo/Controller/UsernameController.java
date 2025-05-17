@@ -119,9 +119,9 @@ public class UsernameController {
 
     // Эндпоинт для смены пароля
     @PostMapping("/change-password")
-    public ResponseEntity<?> changePassword(@RequestBody ChangePasswordDTO request) {
+    public ResponseEntity<?> changePassword(@RequestParam String oldPassword, @RequestParam String newPassword) {
         try {
-            usernameService.changePassword(request.getOldPassword(), request.getNewPassword());
+            usernameService.changePassword(oldPassword, newPassword);
             return ResponseEntity.ok("Password changed successfully");
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
