@@ -96,6 +96,7 @@ public class OrderService {
         }
     }
 
+    //TODO Переписать метод так, чтобы при статусе "взяли" книги пропадали из наличия, а при статусе "отдали" появляются в наличие
 // при переходе из статуса корзины создается новая корзина
     public Order updateOrderStatus(Long orderId, String newStatus) {
         Order order = orderRepository.findById(orderId)

@@ -139,8 +139,8 @@ public class BookController {
     @PatchMapping("/{id}/change")
     public ResponseEntity<?> updateBookArguments(
             @PathVariable Long bookId,
-            @RequestParam String status,
-            @RequestParam String condit) {
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String condit) {
 
         try {
             return ResponseEntity.ok(new BookDTO(bookService.updateBookArguments(bookId, status, condit)));                        //Возвращаем DTO с HTTP 200

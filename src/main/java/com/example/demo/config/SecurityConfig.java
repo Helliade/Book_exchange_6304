@@ -56,17 +56,17 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(request -> {
                     var corsConfiguration = new CorsConfiguration();
                     corsConfiguration.setAllowedOriginPatterns(List.of("*"));
-                    corsConfiguration.setAllowedMethods(List.of("GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"));
+                    corsConfiguration.setAllowedMethods(List.of("GET", "POST", "PATCH", "PUT", "DELETE"));
                     corsConfiguration.setAllowedHeaders(List.of("*"));
                     corsConfiguration.setAllowCredentials(true);
                     return corsConfiguration;
                 }))
                 .authorizeHttpRequests(
                         request -> request
-                                .requestMatchers( "/login","/uploads/**").permitAll()
-
+                                .requestMatchers("/api/users/login", "/api/users/register").permitAll()  //метод доступен всем
 
                                 .anyRequest().permitAll()
+//                                .anyRequest().authenticated() //остальные методы доступны после авторизации
                 )
 
                 .addFilterBefore(jwtAuthenticationFilter,

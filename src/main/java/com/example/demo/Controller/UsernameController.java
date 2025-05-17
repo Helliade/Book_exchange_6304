@@ -5,10 +5,13 @@ import com.example.demo.DTO.OrderDTO;
 import com.example.demo.DTO.UsernameDTO;
 import com.example.demo.Models.Order;
 import com.example.demo.Models.Username;
+import com.example.demo.config.JwtService;
+import com.example.demo.config.TokenUsageService;
 import com.example.demo.service.OrderService;
 import com.example.demo.service.UsernameService;
 import com.example.demo.models.UserModel;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +19,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -35,11 +39,15 @@ public class UsernameController {
 
     private final UsernameService usernameService;
     private final OrderService orderService;
+    private final JwtService jwtService;
+    private final TokenUsageService tokenUsageService;
 
     @Autowired
-    public UsernameController(UsernameService usernameService, OrderService orderService) {
+    public UsernameController(UsernameService usernameService, OrderService orderService, JwtService jwtService, TokenUsageService tokenUsageService) {
         this.usernameService = usernameService;
         this.orderService = orderService;
+        this.jwtService = jwtService;
+        this.tokenUsageService = tokenUsageService;
     }
 
 //GET
@@ -90,6 +98,7 @@ public class UsernameController {
         }
     }
 
+    //TODO проверить!!!
     @PostMapping("/login")
     public ResponseEntity<?> authenticateUser(@RequestParam String login, @RequestParam String rawPassword) {
 
@@ -108,6 +117,8 @@ public class UsernameController {
 //            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());}
     }
 
+
+
     // Эндпоинт для смены пароля
     @PostMapping("/change-password")
     public ResponseEntity<?> changePassword(@RequestBody ChangePasswordDTO request) {
@@ -119,6 +130,25 @@ public class UsernameController {
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
         }
+    }
+
+    @PostMapping("/logout")   //TODO странный метод...
+    public ResponseEntity<?> logout(HttpServletRequest request) {
+        String authHeader = request.getHeader("Authorization");
+
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String jwt = authHeader.substring(7);
+
+            // Получаем время истечения токена
+            Date expiration = jwtService.extractExpiration(jwt);
+
+            // Добавляем токен в черный список
+            tokenUsageService.markTokenAsUsed(jwt, expiration);
+
+            return ResponseEntity.ok("Logout successful");
+        }
+
+        return ResponseEntity.badRequest().body("Invalid token");
     }
 
 //PUT

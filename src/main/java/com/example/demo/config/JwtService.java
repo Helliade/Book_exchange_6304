@@ -1,5 +1,6 @@
 package com.example.demo.config;
 
+        import com.example.demo.Models.Username;
         import io.jsonwebtoken.Claims;
         import io.jsonwebtoken.Jwts;
         import io.jsonwebtoken.io.Decoders;
@@ -7,12 +8,8 @@ package com.example.demo.config;
         import org.springframework.security.core.userdetails.UserDetails;
         import org.springframework.stereotype.Service;
 
-        import com.example.demo.Models.Username;
-
         import javax.crypto.SecretKey;
         import java.util.Date;
-        import java.util.HashMap;
-        import java.util.Map;
         import java.util.function.Function;
 @Service
 public class JwtService {
@@ -25,18 +22,32 @@ public class JwtService {
         ));
     }
 
+    public SecretKey getSecretKey() {
+        return secretKey;
+    }
+
+    public String generateToken(UserDetails userDetails) {
+        return Jwts.builder()
+                .subject(userDetails.getUsername())
+                .issuer("DCB")
+                .issuedAt(new Date(System.currentTimeMillis()))
+                .expiration(new Date(System.currentTimeMillis() + 50000))  //50 секунд
+                .signWith(secretKey) // Используем предварительно созданный ключ
+                .compact();
+    }
+
     public String generateToken(Username user) {
         return Jwts.builder()
                 .subject(user.getLogin())
                 .issuer("DCB")
                 .issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis() + 5000))  //5 секунд
+                .expiration(new Date(System.currentTimeMillis() + 50000))  //50 секунд
                 .signWith(secretKey) // Используем предварительно созданный ключ
                 .compact();
     }
 
     // Извлечение username из токена
-    public String extractLogin(String token) {
+    public String extractUsername(String token) {
         return Jwts.parser()
                 .verifyWith(secretKey)
                 .build()
@@ -46,17 +57,17 @@ public class JwtService {
     }
 
     // Проверка токена
-    public boolean isTokenValid(String token, UserDetails userDetails) {
-        final String userName = extractLogin(token);
-        return userName.equals(userDetails.getUsername()) && !isTokenExpired(token);
-    }
-
-    private boolean isTokenExpired(String token) {
-        return extractExpiration(token).before(new Date());
-    }
-
-    private Date extractExpiration(String token) {
-        return extractClaim(token, Claims::getExpiration);
+    // Проверка токена
+    public boolean isTokenValid(String token) {
+        try {
+            Jwts.parser()
+                    .setSigningKey(secretKey)
+                    .build()
+                    .parseClaimsJws(token);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     private <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
@@ -66,5 +77,14 @@ public class JwtService {
                 .parseSignedClaims(token)
                 .getPayload();
         return claimsResolver.apply(claims);
+    }
+
+    public Date extractExpiration(String token) {
+        return Jwts.parser()
+                .setSigningKey(secretKey)
+                .build()
+                .parseClaimsJws(token)
+                .getBody()
+                .getExpiration();
     }
 }
