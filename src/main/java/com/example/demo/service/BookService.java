@@ -4,14 +4,13 @@ import com.example.demo.Models.Book;
 import com.example.demo.Models.Order;
 import com.example.demo.Models.Work;
 import com.example.demo.repository.BookRepository;
+import com.example.demo.repository.OrderRepository;
 import com.example.demo.repository.WorkRepository;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -20,11 +19,13 @@ public class BookService {
 
     private final BookRepository bookRepository;
     private final WorkRepository workRepository;
+    private final OrderRepository orderRepository;
 
     @Autowired
-    public BookService(BookRepository bookRepository, WorkRepository workRepository) {
+    public BookService(BookRepository bookRepository, WorkRepository workRepository, OrderRepository orderRepository) {
         this.bookRepository = bookRepository;
         this.workRepository = workRepository;
+        this.orderRepository = orderRepository;
     }
 
     //Получение списка всех книг
@@ -53,15 +54,32 @@ public class BookService {
     }
 
     //Обновление заказа
-    public Book updateBook(Book book) {
-        return bookRepository.save(book);
-    }
+//    public Book updateBook(Book book) {
+//        return bookRepository.save(book);
+//    }
 
     //Удаление заказа
     public void deleteBook(Long bookId) {
         bookRepository.findById(bookId)                           //находим заказ
                 .orElseThrow(() -> new EntityNotFoundException("Book not found with id: " + bookId));
         bookRepository.deleteById(bookId);
+    }
+
+    //Удаление связанных с заказом данных
+    public void deleteBookLinkedData(Long bookId) {
+        Book book = bookRepository.findById(bookId)                           //находим книгу
+                .orElseThrow(() -> new EntityNotFoundException("Book not found with id: " + bookId));
+
+        // Удаляем книгу из заказов
+        for (Order order : book.getOrders()) {
+            order.getBooks().remove(book);
+            orderRepository.save(order);
+        }
+        // Удаляем произведения из книги
+        for (Work work : book.getWorks()) {
+            work.getBooks().remove(book);
+            workRepository.save(work);
+        }
     }
 
     public Book updateBookArguments(Long bookId, String newCondit, String newStatus) {
@@ -97,11 +115,11 @@ public class BookService {
     public List<Book> getBooksByArguments(Short yearOfPubl, String publHouse, String language, String condit, String status) {
 
         // Проверка статуса и типа (если переданы)
-        if (!BookValidator.isValidCondit(condit)) {
+        if (condit != null && !BookValidator.isValidCondit(condit)) {
             throw new IllegalArgumentException(
                     String.format("Invalid condit: %s. Valid condit: %s", condit, BookValidator.getValidCondit()));
         }
-        if (!BookValidator.isValidStatus(status)) {
+        if (status != null && !BookValidator.isValidStatus(status)) {
             throw new IllegalArgumentException(
                     String.format("Invalid status: %s. Valid statuses: %s", status, BookValidator.getValidStatuses()));
         }
@@ -151,7 +169,7 @@ public class BookService {
                 .orElseThrow(() -> new EntityNotFoundException("Book not found with id: " + bookId));
         List<Work> works = workRepository.findByBookId(bookId);
         if (works.isEmpty()) {
-            throw new EntityNotFoundException("No books found.");
+            throw new EntityNotFoundException("No works found.");
         }
         return works;
     }

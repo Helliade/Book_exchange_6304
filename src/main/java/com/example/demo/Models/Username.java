@@ -15,12 +15,23 @@ public class Username {
     @Column(nullable = false) // Указывает, что поле не может быть null в базе данных
     private String password;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "role", nullable = false, length = 5)
+    private UserRole role;
+
     // Конструкторы
     public Username() {
         // Пустой конструктор для JPA
     }
 
-    public Username(String login, String password) {
+    public Username(String login, String password, UserRole role) {
+        this.login = login;
+        this.password = password;
+        this.role = role;
+    }
+
+    public Username(String login, String password){
+        this.role = UserRole.USER;
         this.login = login;
         this.password = password;
     }
@@ -48,6 +59,14 @@ public class Username {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public UserRole getRole() {
+        return role;
+    }
+
+    public void setRole(UserRole role) {
+        this.role = role;
     }
 
 

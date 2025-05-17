@@ -9,6 +9,7 @@ import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -154,11 +155,13 @@ public class BookController {
     }
 
 //DELETE
-//TODO удалить все связанные данные
+
     @DeleteMapping("/{bookId}")
+    @PreAuthorize("@mySecurity.isAdmin(authentication.principal.user)")
     public ResponseEntity<?> deleteBook(@PathVariable Long bookId) {
 
         try {
+            bookService.deleteBookLinkedData(bookId);
             bookService.deleteBook(bookId);
             return ResponseEntity.ok("Successful");
         } catch (EntityNotFoundException e) {

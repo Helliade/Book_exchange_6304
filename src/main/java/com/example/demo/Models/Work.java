@@ -22,7 +22,7 @@ public class Work {
     @Column(nullable = false) // Указывает, что поле не может быть null в базе данных
     private String genre;
 
-    @Column(nullable = true)
+    @Column(name = "year_of_publ", nullable = true)
     private Short year;
 
     @ManyToMany(cascade = CascadeType.ALL)

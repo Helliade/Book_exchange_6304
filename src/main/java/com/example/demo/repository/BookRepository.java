@@ -29,5 +29,10 @@ public interface BookRepository extends JpaRepository<Book, Long>,
         """, nativeQuery = true)
     List<Long> findCreationIdsByBookId(@Param("bookId") Long bookId);
 
+    @Query(value = "SELECT b.* FROM Book b " +
+            "JOIN Book_Creation bc ON b.id = bc.Book_id " +
+            "WHERE bc.Creation_id = :workId", nativeQuery = true)
+    List<Book> findByWorkId(@Param("workId") Long workId);
+
 }
 

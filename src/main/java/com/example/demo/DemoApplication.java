@@ -88,6 +88,8 @@ public class DemoApplication {
 //			OrderDTO orderDTO = new OrderDTO(orderService.getOrderWithBooksById(16L));
 //			System.out.println(orderDTO);
 
+//			Order order = orderService.createOrder(usernameService.getUsernameById(13L));
+//			System.out.println(order);
 
 
 // Пример:

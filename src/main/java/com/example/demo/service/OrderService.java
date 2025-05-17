@@ -62,17 +62,18 @@ public class OrderService {
                 .orElseThrow(() -> new EntityNotFoundException("Order not found with id: " + orderId));
     }
 
-    public Order getOrderWithBooksById(Long id) {
-        return orderRepository.findWithBooksById(id).orElse(null);
-    }
+//    public Order getOrderWithBooksById(Long id) {
+//        return orderRepository.findWithBooksById(id).orElse(null);
+//    }
+//
+//    //Обновление заказа
+//    public Order updateOrder(Order order) {
+//        return orderRepository.save(order);
+//    }
 
-    //Создание заказа
-    public Order createOrder(Order order) {
-        return orderRepository.save(order);
-    }
-
-    //Обновление заказа
-    public Order updateOrder(Order order) {
+        //Создание заказа
+    public Order createOrder(Username user) {
+        Order order = new Order("GIVE", "CART", user);
         return orderRepository.save(order);
     }
 
@@ -83,13 +84,35 @@ public class OrderService {
         orderRepository.deleteById(orderId);
     }
 
-//TODO при переходе из статуса корзины нужно создать новую корзину
+    //Удаление связанных с заказом данных
+    public void deleteOrderLinkedData(Long orderId) {
+        Order order = orderRepository.findById(orderId)                           //находим заказ
+                .orElseThrow(() -> new EntityNotFoundException("Order not found with id: " + orderId));
+
+        // Удаляем связи из книг
+        for (Book book : order.getBooks()) {
+            book.getOrders().remove(order);
+            bookRepository.save(book);
+        }
+    }
+
+    //TODO Переписать метод так, чтобы при статусе "взяли" книги пропадали из наличия, а при статусе "отдали" появляются в наличие
+// при переходе из статуса корзины создается новая корзина
     public Order updateOrderStatus(Long orderId, String newStatus) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new IllegalArgumentException("Order not found with id: " + orderId));
 
         try {
             OrderValidator.validateStatusTransition(order.getStatus(), newStatus);
+            if ("CART".equals(order.getStatus())) {        //Создаем новый заказ со статусом корзины
+                for (Book book : order.getBooks()) {       //Книги переходят в статус Отсутствует
+                    book.setStatus("OUT");
+                    bookRepository.save(book);
+                }
+                createOrder(order.getUser());
+            }
+            else throw new IllegalStateException("Can't change the created order.");
+
             order.setStatus(newStatus);
             return orderRepository.save(order);
         } catch (IllegalArgumentException e) {
@@ -101,7 +124,6 @@ public class OrderService {
         }
     }
 
-    //TODO добавить проверку на то, что заказ в статусе корзины
     public Order updateOrderType(Long orderId, String newType) {
         // Валидация статуса
         if (OrderValidator.isValidType(newType)) {
@@ -117,11 +139,14 @@ public class OrderService {
                         "Order not found with id: " + orderId
                 ));
 
+        if (!"CART".equals(order.getStatus())) {
+            throw new IllegalStateException("Can't change the created order.");
+        }
+
         order.setType(newType);
         return orderRepository.save(order);
     }
 
-    //TODO добавить проверку на то, что заказ в статусе корзины
     @Transactional
     public Order addBookToOrder(Long orderId, Long bookId) {
         Order order = orderRepository.findById(orderId)                           //находим заказ
@@ -138,8 +163,12 @@ public class OrderService {
             throw new IllegalStateException("Book is not available. Status: " + book.getStatus());
         }
 
-//        book.setStatus("BOOKED");
-//        bookRepository.save(book); // НЕ Обновляем статус книги (т.к. она просто в корзине)
+        if (!"CART".equals(order.getStatus())) {
+            throw new IllegalStateException("Can't change the created order.");
+        }
+
+        book.setStatus("BOOKED");
+        bookRepository.save(book); // НЕ Обновляем статус книги (т.к. она просто в корзине)
 
         // Добавляем книгу в заказ и сохраняем (обратная связь обновляется автоматически)
         order.getBooks().add(book);
@@ -147,7 +176,6 @@ public class OrderService {
         return orderRepository.save(order);
     }
 
-    //TODO добавить проверку на то, что заказ в статусе корзины
     @Transactional
     public Order deleteBookFromOrder(Long orderId, Long bookId) {
         Order order = orderRepository.findById(orderId)                           //находим заказ
@@ -160,8 +188,12 @@ public class OrderService {
             throw new IllegalStateException("Book not exists in the order");
         }
 
-//        book.setStatus("BOOKED");
-//        bookRepository.save(book); // НЕ Обновляем статус книги (т.к. она просто в корзине)
+        if (!"CART".equals(order.getStatus())) {
+            throw new IllegalStateException("Can't change the created order.");
+        }
+
+        book.setStatus("FREE");
+        bookRepository.save(book); // НЕ Обновляем статус книги (т.к. она просто в корзине)
 
         // Добавляем книгу в заказ и сохраняем (обратная связь обновляется автоматически)
         order.getBooks().remove(book);

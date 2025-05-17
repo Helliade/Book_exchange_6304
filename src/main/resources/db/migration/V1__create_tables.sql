@@ -4,12 +4,21 @@ CREATE TABLE Username (
     password VARCHAR(255) NOT NULL
 );
 
+
+
 CREATE TABLE Booking (
     id BIGINT PRIMARY KEY,
     type VARCHAR(50) NOT NULL CHECK (type IN ('GIVE', 'TAKE')),
-    status VARCHAR(50) NOT NULL CHECK (status IN ('CREATED', 'IN_TRANSIT', 'DELIVERY_READY', 'COMPLETED')),
+    status VARCHAR(50) NOT NULL CHECK (status IN ('CART', 'CREATED', 'IN_TRANSIT', 'DELIVERY_READY', 'COMPLETED')),
     user_id BIGINT NOT NULL REFERENCES Username(id)
 );
+
+ALTER TABLE Booking
+DROP CONSTRAINT booking_status_check;
+ALTER COLUMN status
+TYPE VARCHAR(50),
+ADD CONSTRAINT booking_status_check
+CHECK (status IN ('CART', 'CREATED', 'IN_TRANSIT', 'DELIVERY_READY', 'COMPLETED', 'CANCELLED'));
 
 CREATE TABLE Booking_Book (
   Booking_id BIGINT REFERENCES Booking(id),

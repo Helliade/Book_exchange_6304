@@ -1,17 +1,25 @@
 package com.example.demo.Controller;
 
+import com.example.demo.DTO.ChangePasswordDTO;
 import com.example.demo.DTO.OrderDTO;
 import com.example.demo.DTO.UsernameDTO;
 import com.example.demo.Models.Order;
 import com.example.demo.Models.Username;
+import com.example.demo.config.JwtService;
+import com.example.demo.config.TokenUsageService;
 import com.example.demo.service.OrderService;
 import com.example.demo.service.UsernameService;
+import com.example.demo.models.UserModel;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -26,6 +34,7 @@ import java.util.List;
 
 
 @RestController
+
 @RequestMapping("/api/users")                                           //это аннотация Spring, которая связывает HTTP-запрос
                                                                         // (URL + метод) с конкретным методом Java-класса
                                                                         //(контроллера).Метка в коде/инструкция
@@ -33,15 +42,20 @@ public class UsernameController {
 
     private final UsernameService usernameService;
     private final OrderService orderService;
+    private final JwtService jwtService;
+    private final TokenUsageService tokenUsageService;
 
     @Autowired
-    public UsernameController(UsernameService usernameService, OrderService orderService) {
+    public UsernameController(UsernameService usernameService, OrderService orderService, JwtService jwtService, TokenUsageService tokenUsageService) {
         this.usernameService = usernameService;
         this.orderService = orderService;
+        this.jwtService = jwtService;
+        this.tokenUsageService = tokenUsageService;
     }
 
 //GET
     @GetMapping
+    @PreAuthorize("@mySecurity.isAdmin(authentication.principal.user)")
     public List<UsernameDTO> getAllUsernames() {
         List<UsernameDTO> result = new LinkedList<>();
         for (Username username : usernameService.getAllUsernames()) {
@@ -51,27 +65,10 @@ public class UsernameController {
     }
 
     @GetMapping("/{userId}")
+    @PreAuthorize("@mySecurity.isAdmin(authentication.principal.user)")
     public UsernameDTO getUsernameById(@PathVariable Long userId) {
         return new UsernameDTO(usernameService.getUsernameById(userId));
     }
-
-//    @GetMapping("/{userId}/orders")
-//    public ResponseEntity<?> getUserOrders(
-//            @PathVariable Long userId,
-//            @RequestParam(required = false) String status,
-//            @RequestParam(required = false) String type) {
-//
-//        try {
-//            List<OrderDTO> result = new LinkedList<>();
-//            for (Order order : orderService.getUserOrders(userId)) {
-//                result.add(new OrderDTO(order));
-//            }
-//            return ResponseEntity.ok(result);                        //Возвращаем DTO с HTTP 200
-//
-//        } catch (EntityNotFoundException e) {
-//            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-//        }
-//    }
 
     @GetMapping("/{userId}/search")
     public ResponseEntity<?> getOrdersByUserIdAndArguments(
@@ -94,34 +91,78 @@ public class UsernameController {
 //POST
 
     @PostMapping("/register")
-    public ResponseEntity<?> createUsername(String login, String rawPassword) {
+    public ResponseEntity<?> createUsername(@RequestParam String login, @RequestParam String rawPassword) {
         try {
             Username user = usernameService.registerUsername(login, rawPassword);
+            orderService.createOrder(user);   //создаем первый заказ со статусом корзины
             return ResponseEntity.ok(new UsernameDTO(user));
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
     }
 
+    //TODO проверить!!!
     @PostMapping("/login")
-    public ResponseEntity<?> authenticateUser(String login, String rawPassword) {
-        boolean isAuthenticated = usernameService.authenticateUsername(login, rawPassword);
-        if (isAuthenticated) {
-            return ResponseEntity.ok("Authentication successful");
-        } else {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
+    public ResponseEntity<?> authenticateUser(@RequestParam String login, @RequestParam String rawPassword) {
+
+        try {
+            Username user = new Username(login, rawPassword);
+            String token = usernameService.verify(user);
+
+//            if ("failure".equals(token))
+//                throw new RuntimeException("Нет доступа");
+
+            return ResponseEntity.ok(new UserModel(token, user.getRole()));
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
         }
+//        } catch (RuntimeException e) {
+//            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());}
+    }
+
+
+
+    // Эндпоинт для смены пароля
+    @PostMapping("/change-password")
+    public ResponseEntity<?> changePassword(@RequestBody ChangePasswordDTO request) {
+        try {
+            usernameService.changePassword(request.getOldPassword(), request.getNewPassword());
+            return ResponseEntity.ok("Password changed successfully");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/logout")   //TODO странный метод...
+    public ResponseEntity<?> logout(HttpServletRequest request) {
+        String authHeader = request.getHeader("Authorization");
+
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String jwt = authHeader.substring(7);
+
+            // Получаем время истечения токена
+            Date expiration = jwtService.extractExpiration(jwt);
+
+            // Добавляем токен в черный список
+            tokenUsageService.markTokenAsUsed(jwt, expiration);
+
+            return ResponseEntity.ok("Logout successful");
+        }
+
+        return ResponseEntity.badRequest().body("Invalid token");
     }
 
 //PUT
 
-//    //TODO переписать метод обновления пользователя
+//    //переписать метод обновления пользователя
 //    @PutMapping("/{userId}")
 //    public Username updateUsername(@PathVariable Long userId, @RequestBody Username username) {
 //        username.setId(userId);
 //        return usernameService.updateUsername(username);
 //    }
-
+//
 //    @PutMapping("/{id}")
 //    public ResponseEntity<UsernameDTO> updateUsername(
 //            @PathVariable Long id,
@@ -133,11 +174,12 @@ public class UsernameController {
 
 
     //DELETE
-    //TODO удалить все связанные данные
+
     @DeleteMapping("/{userId}")
     public ResponseEntity<?> deleteUsername(@PathVariable Long userId) {
 
         try {
+            usernameService.deleteUsernameLinkedData(userId);
             usernameService.deleteUsername(userId);
             return ResponseEntity.ok("Successful");
         } catch (EntityNotFoundException e) {
@@ -147,47 +189,6 @@ public class UsernameController {
 }
 
 
-
-
-
-
-//import com.example.demo.Models.Username;
-//import com.example.demo.service.UsernameService;
-//import org.springframework.http.HttpStatus;
-//import org.springframework.http.ResponseEntity;
-//import org.springframework.web.bind.annotation.*;
-//
-//@RestController
-//@RequestMapping("/users")
-//public class UsernameController {
-//
-//    private final UsernameService usernameService;
-//
-//    public UsernameController(UsernameService usernameService) {
-//        this.usernameService = usernameService;
-//    }
-//
-//    // Эндпоинт для регистрации нового пользователя
-//    @PostMapping("/register")
-//    public ResponseEntity<?> registerUser(@RequestBody RegistrationRequest request) {
-//        try {
-//            Username user = usernameService.registerUser(request.getLogin(), request.getPassword());
-//            return ResponseEntity.ok(user);
-//        } catch (RuntimeException e) {
-//            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-//        }
-//    }
-//
-//    // Эндпоинт для аутентификации пользователя
-//    @PostMapping("/authenticate")
-//    public ResponseEntity<?> authenticateUser(@RequestBody AuthenticationRequest request) {
-//        boolean isAuthenticated = usernameService.authenticate(request.getLogin(), request.getPassword());
-//        if (isAuthenticated) {
-//            return ResponseEntity.ok("Authentication successful");
-//        } else {
-//            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
-//        }
-//    }
 //
 //    // Эндпоинт для смены пароля
 //    @PostMapping("/change-password")
@@ -198,61 +199,5 @@ public class UsernameController {
 //        } catch (RuntimeException e) {
 //            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
 //        }
-//    }
-//
-//    // DTO для регистрации
-//    public static class RegistrationRequest {
-//        private String login;
-//        private String password;
-//
-//        public RegistrationRequest() {
-//        }
-//
-//        public String getLogin() {
-//            return login;
-//        }
-//
-//        public void setLogin(String login) {
-//            this.login = login;
-//        }
-//
-//        public String getPassword() {
-//            return password;
-//        }
-//
-//        public void setPassword(String password) {
-//            this.password = password;
-//        }
-//    }
-//
-//    // DTO для аутентификации
-//    public static class AuthenticationRequest {
-//        private String login;
-//        private String password;
-//
-//        public AuthenticationRequest() {
-//        }
-//
-//        public String getLogin() {
-//            return login;
-//        }
-//
-//        public void setLogin(String login) {
-//            this.login = login;
-//        }
-//
-//        public String getPassword() {
-//            return password;
-//        }
-//
-//        public void setPassword(String password) {
-//            this.password = password;
-//        }
-//    }
-//
-
-//    @PostMapping("/register")
-//    public Username createUsername(@RequestBody Username username) {
-//        return usernameService.registerUsername(username);
 //    }
 //}

@@ -1,14 +1,18 @@
 package com.example.demo.service;
 
+import com.example.demo.Models.Order;
 import com.example.demo.Models.Username;
+import com.example.demo.config.JwtService;
 import com.example.demo.repository.UsernameRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-
-//import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import java.util.List;
 
@@ -17,12 +21,18 @@ import java.util.List;
 public class UsernameService {
 
     private final UsernameRepository usernameRepository;
-//    private final BCryptPasswordEncoder passwordEncoder;
+    private final OrderService orderService;
+    private final BCryptPasswordEncoder passwordEncoder;
+    private final AuthenticationManager authenticationManager;
+    private final JwtService jwtService;
 
     @Autowired
-    public UsernameService(UsernameRepository usernameRepository){ //, BCryptPasswordEncoder passwordEncoder) {
+    public UsernameService(UsernameRepository usernameRepository, OrderService orderService, BCryptPasswordEncoder passwordEncoder, AuthenticationManager authenticationManager, JwtService jwtService) {
         this.usernameRepository = usernameRepository;
-//        this.passwordEncoder = passwordEncoder;
+        this.passwordEncoder = passwordEncoder;
+        this.orderService = orderService;
+        this.authenticationManager = authenticationManager;
+        this.jwtService = jwtService;
     }
 
     //Получение списка всех пользователей
@@ -50,64 +60,80 @@ public class UsernameService {
         }
 
         // Создание нового пользователя
-        Username username = new Username(login, password);
-        //passwordEncoder.encode(password); // Хеширование пароля
+        Username username = new Username(login, passwordEncoder.encode(password)); // Хеширование пароля
         return usernameRepository.save(username);
     }
 
+    public String verify(Username username) {
+        Authentication authenticate
+                = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                        username.getLogin(), username.getPassword()
+                )
+        );
 
-    public boolean authenticateUsername(String login, String rawPassword) { //String login, String rawPassword) {
-        // Поиск пользователя по логину
-        Username user = usernameRepository.findByLogin(login);
-        if (user == null) {
-            return false; // Пользователь не найден
-        }
-        // Проверка пароля
-        return rawPassword.equals(user.getPassword());         //passwordEncoder.matches(rawPassword, user.getPassword()); //метод проверяет, соответсвует ли пароль
-    }                                                                               //пользователя хешу, хранящимуся в БД
+//        var u = userRepository.findByLogin(user.getLogin());
+        if(!authenticate.isAuthenticated())
+            throw new EntityNotFoundException("Invalid login or password"); // Пользователь не найден
+        return jwtService.generateToken(username);
+    }
 
-//    //TODO Обновление пользователя   !!!!
+
+//    public Username authenticateUsername(String login, String rawPassword) { //String login, String rawPassword) {
+//        // Поиск пользователя по логину
+//        Username user = usernameRepository.findByLogin(login);
+//        if (user == null || !passwordEncoder.matches(rawPassword, user.getPassword())) {
+//            throw new EntityNotFoundException("Invalid login or password"); // Пользователь не найден
+//        }
+//        return user;
+//    }
+
+
+//    // Обновление пользователя   !!!!
 //    public Username updateUsername(Username username) {
 //        return usernameRepository.save(username);
 //    }
 
     //Удаление пользователя
     public void deleteUsername(Long userId) {
-
         usernameRepository.findById(userId)                           //находим user-a
                 .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + userId));
         usernameRepository.deleteById(userId);
     }
-}
 
-//@Service
-//public class UsernameService {
-//
-//    @Transactional
-//    public Username registerUser(String login, String rawPassword) {
-//        // Проверка существования пользователя
-//        if (usernameRepository.findByLogin(login) != null) {
-//            throw new RuntimeException("Пользователь с таким логином уже существует");
-//        }
-//
-//        // Создание нового пользователя
-//        Username username = new Username();
-//        username.setLogin(login);
-//        username.setPassword(passwordEncoder.encode(rawPassword)); // Хеширование пароля
-//        return usernameRepository.save(username);
-//    }
-//
-//
-//    // Дополнительный метод для смены пароля
-//    @Transactional
-//    public void changePassword(String login, String oldPassword, String newPassword) {
-//        // Аутентификация перед сменой пароля
-//        if (!authenticate(login, oldPassword)) {
-//            throw new RuntimeException("Неверный текущий пароль");
-//        }
-//
-//        Username username = usernameRepository.findByLogin(login);
-//        username.setPassword(passwordEncoder.encode(newPassword));
-//        usernameRepository.save(username);
-//    }
-//}
+    //Удаление связанных с пользователем данных
+    public void deleteUsernameLinkedData(Long userId) {
+        Username username = usernameRepository.findById(userId)                           //находим user-a
+                .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + userId));
+
+        // Удаляем заказы у пользователя
+        for (Order order : orderService.getOrdersByUserIdAndArguments(userId, null, null)) {
+            orderService.deleteOrderLinkedData(order.getId());
+            orderService.deleteOrder(order.getId());
+        }
+    }
+
+    @Transactional
+    public void changePassword(String oldPassword, String newPassword) {
+        // 1. Получаем текущего пользователя из SecurityContext
+        String login = SecurityContextHolder.getContext().getAuthentication().getName();
+        Username user = usernameRepository.findByLogin(login);
+        if (user == null) {
+            throw new RuntimeException("Пользователь не найден!");
+        }
+
+        // 2. Проверяем старый пароль
+        if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
+            throw new IllegalArgumentException("Неверный старый пароль!");
+        }
+
+        // 3. Проверяем, что новый пароль не совпадает со старым
+        if (passwordEncoder.matches(newPassword, user.getPassword())) {
+            throw new IllegalArgumentException("Новый пароль должен отличаться от старого!");
+        }
+
+        // 4. Хешируем и сохраняем новый пароль
+        user.setPassword(passwordEncoder.encode(newPassword));
+        usernameRepository.save(user);
+    }
+}
