@@ -10,6 +10,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,14 +26,16 @@ public class UsernameService {
     private final BCryptPasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
+    private final UserDetailsService userDetailsService;
 
     @Autowired
-    public UsernameService(UsernameRepository usernameRepository, OrderService orderService, BCryptPasswordEncoder passwordEncoder, AuthenticationManager authenticationManager, JwtService jwtService) {
+    public UsernameService(UsernameRepository usernameRepository, OrderService orderService, BCryptPasswordEncoder passwordEncoder, AuthenticationManager authenticationManager, JwtService jwtService, UserDetailsService userDetailsService) {
         this.usernameRepository = usernameRepository;
         this.passwordEncoder = passwordEncoder;
         this.orderService = orderService;
         this.authenticationManager = authenticationManager;
         this.jwtService = jwtService;
+        this.userDetailsService = userDetailsService;
     }
 
     //Получение списка всех пользователей
@@ -45,10 +48,9 @@ public class UsernameService {
                 .orElseThrow(() -> new RuntimeException("Username not found"));
     }
 
-//    public Username getUserByLogin(String login) {
-//        return usernameRepository.findByLogin(login)
-//                .orElseThrow(() -> new RuntimeException("Username not found"));
-//    }
+    public Username getUsernameByLogin(String login) {
+        return usernameRepository.findByLogin(login);
+    }
 
 
 
@@ -75,7 +77,7 @@ public class UsernameService {
 //        var u = userRepository.findByLogin(user.getLogin());
         if(!authenticate.isAuthenticated())
             throw new EntityNotFoundException("Invalid login or password"); // Пользователь не найден
-        return jwtService.generateToken(username);
+        return jwtService.generateAccessToken(userDetailsService.loadUserByUsername(username.getLogin()));
     }
 
 

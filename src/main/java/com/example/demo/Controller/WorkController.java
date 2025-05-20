@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.LinkedList;
@@ -25,7 +26,7 @@ import java.util.List;
 
 
 @RestController
-
+@EnableMethodSecurity(prePostEnabled = true)
 @RequestMapping("/api/works")                                                 //это аннотация Spring, которая связывает HTTP-запрос
                                                                               // (URL + метод) с конкретным методом Java-класса
                                                                               //(контроллера).Метка в коде/инструкция
@@ -40,8 +41,7 @@ public class WorkController {
     }
 
 
-
-//GET
+    //GET
     @GetMapping
     public ResponseEntity<?> getAllWorks() {
         try {
@@ -100,7 +100,7 @@ public class WorkController {
         }
     }
 
-//POST
+    //POST
     @PostMapping
     public ResponseEntity<?> createWork(String name, String writer, String genre, Short year) {
 
@@ -118,7 +118,7 @@ public class WorkController {
 //        return workService.updateWork(work);
 //    }
 
-//DELETE
+    //DELETE
     @DeleteMapping("/{workId}")
     @PreAuthorize("@mySecurity.isAdmin(authentication.principal.user)")
     public ResponseEntity<?> deleteWork(@PathVariable Long workId) {
@@ -130,5 +130,5 @@ public class WorkController {
         } catch (EntityNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
-    }}
-
+    }
+}

@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -28,9 +29,10 @@ import java.util.List;
 //        DELETE /api/books/{bookId}/creations       - Удалить произведение из книги
 
 @RestController
-@RequestMapping("/api/books")                                               //это аннотация Spring, которая связывает HTTP-запрос
+@EnableMethodSecurity(prePostEnabled = true)
+@RequestMapping("/api/books")                                               // Это аннотация Spring, которая связывает HTTP-запрос
                                                                             // (URL + метод) с конкретным методом Java-класса
-                                                                            //(контроллера).Метка в коде/инструкция
+                                                                            //(контроллера). Метка в коде/инструкция
 public class BookController {
 
     private final BookService bookService;

@@ -15,23 +15,30 @@ public class TokenUsageService {
     @Autowired
     private UsedTokenRepository usedTokenRepository;
 
+    public TokenUsageService(UsedTokenRepository usedTokenRepository) {
+        this.usedTokenRepository = usedTokenRepository;
+    }
+
     // Помечаем токен как использованный
+    @Transactional
     public void markTokenAsUsed(String token, Date expiryDate) {
-        UsedToken usedToken = new UsedToken();
-        usedToken.setToken(token);
-        usedToken.setExpiryDate(expiryDate);
-        usedTokenRepository.save(usedToken);
+        if (!usedTokenRepository.existsByToken(token)) {
+            UsedToken usedToken = new UsedToken();
+            usedToken.setToken(token);
+            usedToken.setExpiryDate(expiryDate);
+            usedTokenRepository.save(usedToken);
+        }
     }
 
     // Проверяем, был ли токен уже использован
     public boolean isTokenUsed(String token) {
-        return usedTokenRepository.existsById(token);
+        return usedTokenRepository.existsByToken(token);
     }
 
     // Очистка устаревших токенов (можно вызывать по расписанию)
-    @Scheduled(fixedRate = 1800000) // Каждые полчаса
+    @Scheduled(fixedRate = 3600000) // Каждый час
     @Transactional
     public void cleanupExpiredTokens() {
-        usedTokenRepository.deleteExpiredTokens(Date.from(Instant.now()));
+        usedTokenRepository.deleteExpiredTokens(new Date());
     }
 }

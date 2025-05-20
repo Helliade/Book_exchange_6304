@@ -5,6 +5,8 @@ import com.fasterxml.jackson.core.filter.TokenFilter;
 import org.apache.catalina.filters.CorsFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -20,6 +22,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -63,16 +66,35 @@ public class SecurityConfig {
                 }))
                 .authorizeHttpRequests(
                         request -> request
-                                .requestMatchers("/api/users/login",
-                                        "/api/users/register").permitAll()  //метод доступен всем
+                                .requestMatchers("/api/auth/**",
+                                        "/error").permitAll()  //метод доступен всем
 
-                                .anyRequest().permitAll()
-//                                .anyRequest().authenticated() //остальные методы доступны после авторизации
+//                                .anyRequest().permitAll()
+                                .anyRequest().authenticated() //остальные методы доступны после авторизации
                 )
-
+                .exceptionHandling(exceptions -> exceptions
+                        .accessDeniedHandler(accessDeniedHandler())
+                )
                 .addFilterBefore(jwtAuthenticationFilter,
                         UsernamePasswordAuthenticationFilter.class);
         return httpSecurity.build();
+    }
+
+    @Bean
+    public AccessDeniedHandler accessDeniedHandler() {
+        return (request, response, accessDeniedException) -> {
+            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+            response.setStatus(HttpStatus.FORBIDDEN.value());
+            response.getWriter().write(
+                    """
+                    {
+                        "status": "error",
+                        "message": "Access denied",
+                        "details": "You don't have permission to access this resource"
+                    }
+                    """
+            );
+        };
     }
 
 //    @Bean
@@ -94,7 +116,6 @@ public class SecurityConfig {
         DaoAuthenticationProvider provider
                 = new DaoAuthenticationProvider();
         provider.setUserDetailsService(userDetailsService);
-//        provider.setPasswordEncoder(NoOpPasswordEncoder.getInstance());
         provider.setPasswordEncoder(passwordEncoder());
         return provider;
     }

@@ -30,18 +30,18 @@ public class OrderService {
         this.bookRepository = bookRepository;
     }
 
-    public List<Order> getUserOrders(Long userId) {
-        // Проверяем существование пользователя
-        if (!usernameRepository.existsById(userId)) {
-            throw new EntityNotFoundException("User not found with id: " + userId);
-        }
-
-        List<Order> orders = orderRepository.findByUserId(userId);
-        if (orders.isEmpty()) {
-            throw new EntityNotFoundException("No orders found.");
-        }
-        return orders;
-    }
+//    public List<Order> getUserOrders(Long userId) {
+//        // Проверяем существование пользователя
+//        if (!usernameRepository.existsById(userId)) {
+//            throw new EntityNotFoundException("User not found with id: " + userId);
+//        }
+//
+//        List<Order> orders = orderRepository.findByUserId(userId);
+//        if (orders.isEmpty()) {
+//            throw new EntityNotFoundException("No orders found.");
+//        }
+//        return orders;
+//    }
 
     //Получение списка всех заказов
     public List<Order> getAllOrders() {
@@ -50,10 +50,6 @@ public class OrderService {
             throw new EntityNotFoundException("No orders found.");
         }
         return orders;
-    }
-
-    public List<Order> getOrdersByUser(Username user) {
-        return orderRepository.findByUser(user);
     }
 
     //Получение заказа по ID
@@ -96,8 +92,7 @@ public class OrderService {
         }
     }
 
-    //TODO Переписать метод так, чтобы при статусе "взяли" книги пропадали из наличия, а при статусе "отдали" появляются в наличие
-// при переходе из статуса корзины создается новая корзина
+// при переходе из статуса корзины находится другая корзина или создается новая с тем же типом
     public Order updateOrderStatus(Long orderId, String newStatus) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new IllegalArgumentException("Order not found with id: " + orderId));
@@ -105,11 +100,18 @@ public class OrderService {
         try {
             OrderValidator.validateStatusTransition(order.getStatus(), newStatus);
             if ("CART".equals(order.getStatus())) {        //Создаем новый заказ со статусом корзины
-                for (Book book : order.getBooks()) {       //Книги переходят в статус Отсутствует
-                    book.setStatus("OUT");
-                    bookRepository.save(book);
+                if ("TAKE".equals(order.getType())) {
+                    for (Book book : order.getBooks()) {       //Книги переходят в статус Отсутствует, когда её забирают
+                        book.setStatus("OUT");
+                        bookRepository.save(book);
+                    }
+                } else {
+                    for (Book book : order.getBooks()) {       //Книги переходят в статус Свободна, когда её отдают
+                        book.setStatus("FREE");
+                        bookRepository.save(book);
+                    }
                 }
-                createOrder(order.getUser());
+                getCartByUserIdAndType(order.getUser(), order.getType());
             }
             else throw new IllegalStateException("Can't change the created order.");
 
@@ -201,7 +203,7 @@ public class OrderService {
         return orderRepository.save(order);
     }
 
-    public List<Order> getOrdersByUserIdAndArguments(Long userId,String type, String status) { // Подразумевается,
+    public List<Order> getOrdersByUserIdAndArguments(Long userId, String type, String status) { // Подразумевается,
         // что авторизированный пользователь выбирает на сайте один из возможных типов и/или статусов заказа
         // Поиск заказов
         List<Order> orders;
@@ -223,6 +225,15 @@ public class OrderService {
             throw new EntityNotFoundException(mess);
         }
         return orders;
+    }
+
+    public Order getCartByUserIdAndType (Username username, String type) {
+        List<Order> orders = getOrdersByUserIdAndArguments(username.getId(), type, "CART");
+        if (orders.isEmpty()) {
+            return createOrder(usernameRepository.findById(username.getId())
+                    .orElseThrow(() -> new EntityNotFoundException("User not found")));
+        }
+        return orders.get(0);
     }
 
     public List<Order> getOrdersByArguments(String type, String status) {
@@ -259,21 +270,6 @@ public class OrderService {
         }
         return orders;
     }
-
-
-
-
-
-
-//    public Set<Book> getBooksInOrder(Long orderId) {
-//        Order order = orderRepository.findByIdWithBooks(orderId)
-//                .orElseThrow(() -> new ResponseStatusException(
-//                        HttpStatus.NOT_FOUND,
-//                        "Order not found with id: " + orderId
-//                ));
-//
-//        return order.getBooks();
-//    }
 }
 
 

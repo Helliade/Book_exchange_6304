@@ -1,6 +1,5 @@
 package com.example.demo.Controller;
 
-import com.example.demo.DTO.ChangePasswordDTO;
 import com.example.demo.DTO.OrderDTO;
 import com.example.demo.DTO.UsernameDTO;
 import com.example.demo.Models.Order;
@@ -9,17 +8,14 @@ import com.example.demo.config.JwtService;
 import com.example.demo.config.TokenUsageService;
 import com.example.demo.service.OrderService;
 import com.example.demo.service.UsernameService;
-import com.example.demo.models.UserModel;
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.web.bind.annotation.*;
 
-
-import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -27,14 +23,12 @@ import java.util.List;
 //        GET    /api/users/{userId}          - Получить пользователя по ID
 //        GET    /api/users/{userId}/search   - Фильтрация заказов по типу и/или статусу у определенного пользователя
 //                                            + Вывод всех заказов
-//        POST   /api/users/register          - Создать нового пользователя
-//        POST   /api/users/login             - Аутентификация пользователя
 //   #-----     PUT/PATCH    /api/users/{userId}           - Обновить пользователя
 //        DELETE /api/users/{userId}          - Удалить пользователя
 
 
 @RestController
-
+@EnableMethodSecurity(prePostEnabled = true)
 @RequestMapping("/api/users")                                           //это аннотация Spring, которая связывает HTTP-запрос
                                                                         // (URL + метод) с конкретным методом Java-класса
                                                                         //(контроллера).Метка в коде/инструкция
@@ -70,6 +64,7 @@ public class UsernameController {
         return new UsernameDTO(usernameService.getUsernameById(userId));
     }
 
+    //TODO может переписать, чтобы ID брался через токен?
     @GetMapping("/{userId}/search")
     public ResponseEntity<?> getOrdersByUserIdAndArguments(
             @PathVariable Long userId,
@@ -86,67 +81,6 @@ public class UsernameController {
         } catch (EntityNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
-    }
-
-//POST
-
-    @PostMapping("/register")
-    public ResponseEntity<?> createUsername(@RequestParam String login, @RequestParam String rawPassword) {
-        try {
-            Username user = usernameService.registerUsername(login, rawPassword);
-            orderService.createOrder(user);   //создаем первый заказ со статусом корзины
-            return ResponseEntity.ok(new UsernameDTO(user));
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-        }
-    }
-
-    //TODO проверить!!!
-    @PostMapping("/login")
-    public ResponseEntity<?> authenticateUser(@RequestParam String login, @RequestParam String rawPassword) {
-
-        try {
-            Username user = new Username(login, rawPassword);
-            String token = usernameService.verify(user);
-
-            return ResponseEntity.ok(new UserModel(token, user.getRole()));
-        } catch (EntityNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
-        }
-    }
-
-
-
-    // Эндпоинт для смены пароля
-    @PostMapping("/change-password")
-    public ResponseEntity<?> changePassword(@RequestParam String oldPassword, @RequestParam String newPassword) {
-        try {
-            usernameService.changePassword(oldPassword, newPassword);
-            return ResponseEntity.ok("Password changed successfully");
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
-        }
-    }
-
-    @PostMapping("/logout")   //TODO странный метод...
-    public ResponseEntity<?> logout(HttpServletRequest request) {
-        String authHeader = request.getHeader("Authorization");
-
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            String jwt = authHeader.substring(7);
-
-            // Получаем время истечения токена
-            Date expiration = jwtService.extractExpiration(jwt);
-
-            // Добавляем токен в черный список
-            tokenUsageService.markTokenAsUsed(jwt, expiration);
-
-            return ResponseEntity.ok("Logout successful");
-        }
-
-        return ResponseEntity.badRequest().body("Invalid token");
     }
 
 //PUT
@@ -171,6 +105,7 @@ public class UsernameController {
     //DELETE
 
     @DeleteMapping("/{userId}")
+    @PreAuthorize("@mySecurity.isAdmin(authentication.principal.user)")
     public ResponseEntity<?> deleteUsername(@PathVariable Long userId) {
 
         try {
@@ -182,17 +117,3 @@ public class UsernameController {
         }
     }
 }
-
-
-//
-//    // Эндпоинт для смены пароля
-//    @PostMapping("/change-password")
-//    public ResponseEntity<?> changePassword(@RequestBody ChangePasswordRequest request) {
-//        try {
-//            usernameService.changePassword(request.getLogin(), request.getOldPassword(), request.getNewPassword());
-//            return ResponseEntity.ok("Password changed successfully");
-//        } catch (RuntimeException e) {
-//            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-//        }
-//    }
-//}

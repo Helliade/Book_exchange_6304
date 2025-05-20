@@ -2,6 +2,7 @@ package com.example.demo.Controller;
 
 import com.example.demo.DTO.OrderDTO;
 import com.example.demo.Models.Order;
+import com.example.demo.config.JwtService;
 import com.example.demo.service.OrderService;
 import com.example.demo.service.UsernameService;
 import jakarta.persistence.EntityNotFoundException;
@@ -9,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.LinkedList;
@@ -19,7 +21,7 @@ import java.util.List;
 //        GET    /api/orders/search              - Фильтрация по типу и/или статусу (у пользователя в UsernameContr...)
 //        POST   /api/orders/{userId}            - Создать новый заказ
 //        (создается при переходе прошлого заказа из статуса корзины в созданный заказ)
-//        POST   /api/orders/{orderId}/books     - Добавить книгу в заказ
+//        POST   /api/orders/addBook             - Добавить книгу в заказ
 //   ----     PUT    /api/orders/{id}                - Обновить заказ
 //        PATCH  /api/orders/{orderId}/status    - Изменить статус заказа
 //        PATCH  /api/orders/{orderId}/type      - Изменить тип заказа
@@ -28,7 +30,7 @@ import java.util.List;
 
 
 @RestController
-
+@EnableMethodSecurity(prePostEnabled = true)
 @RequestMapping("/api/orders")                                             //это аннотация Spring, которая связывает HTTP-запрос
                                                                            // (URL + метод) с конкретным методом Java-класса
                                                                            //(контроллера).Метка в коде/инструкция
@@ -37,13 +39,15 @@ public class OrderController {
 
     private final OrderService orderService;
     private final UsernameService usernameService;
+    private final JwtService jwtService;
 
 
     @Autowired
-    public OrderController(OrderService orderService, UsernameService usernameService) {
+    public OrderController(OrderService orderService, UsernameService usernameService, JwtService jwtService) {
 
         this.orderService = orderService;
         this.usernameService = usernameService;
+        this.jwtService = jwtService;
     }
 
 //GET
@@ -61,7 +65,7 @@ public class OrderController {
         }
     }
 
-
+    //TODO может переписать, чтобы ID пользователя брался через токен и проверялось, его ли это заказ?
     @GetMapping("/{orderId}")
     public ResponseEntity<?> getOrderById(@PathVariable Long orderId) {
         try {
@@ -94,19 +98,22 @@ public class OrderController {
 //POST
     //Создание заказа - передаем сущность заказа со статусом корзины,
     //переводим статус в Создан, создаем новый заказ со статусом корзины
-    //TODO
     @PostMapping("/{userId}")
     public ResponseEntity<?> createOrder(@PathVariable Long userId) {
         return ResponseEntity.ok(new OrderDTO(orderService.createOrder(usernameService.getUsernameById(userId))));
     }
 
-    @PostMapping(value = "/{orderId}/books")
+    @PostMapping(value = "/addBook")
     public ResponseEntity<?> addBookToOrder(
-            @PathVariable Long orderId,
-            @RequestParam Long bookId) {
+            @RequestParam Long bookId,
+            @RequestParam String typeOfOrder,
+            @RequestHeader("Authorization") String authHeader) {
 
         try {
-            Order updatedOrder = orderService.addBookToOrder(orderId, bookId);
+            String accessToken = authHeader.substring(7);
+            Order order = orderService.getCartByUserIdAndType
+                    (jwtService.extractUsernameModel(accessToken), typeOfOrder);
+            Order updatedOrder = orderService.addBookToOrder(order.getId(), bookId);
             return ResponseEntity.ok(new OrderDTO(updatedOrder));                        //Возвращаем DTO с HTTP 200
 
         } catch (IllegalStateException e) {
@@ -127,6 +134,7 @@ public class OrderController {
 
 //PATCH
     //TODO может после обновления попробовать поискать заказ в статусе корзины (найдется лишний)
+    // + проверка на то, что пользователь может лишь оформить и отменить заказ
     @PatchMapping("/{orderId}/status")
     public ResponseEntity<?> updateOrderStatus(
         @PathVariable Long orderId,
@@ -193,13 +201,3 @@ public class OrderController {
         }
     }
 }
-
-
-
-//    @PostMapping
-//    public ResponseEntity<Booking> create(@RequestBody Booking booking,
-//                                          @RequestParam Long userId) {
-//        return ResponseEntity.status(HttpStatus.CREATED)
-//                .body(service.create(booking, userId));
-//    }
-

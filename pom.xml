@@ -137,6 +137,12 @@
 			<scope>runtime</scope>
 		</dependency>
 
+		<!-- Redis для хранения refresh-токенов -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-redis</artifactId>
+		</dependency>
+
 		<!-- Катя веб -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>

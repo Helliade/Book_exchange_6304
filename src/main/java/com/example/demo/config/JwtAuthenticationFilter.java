@@ -1,6 +1,5 @@
 package com.example.demo.config;
 
-
 import io.jsonwebtoken.Jwts;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -21,9 +20,7 @@ import java.util.Date;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
-
     private final TokenUsageService tokenUsageService;
-
     private final UserDetailsService userDetailsService;
 
     public JwtAuthenticationFilter(JwtService jwtService, TokenUsageService tokenUsageService, UserDetailsService userDetailsService) {
@@ -41,8 +38,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         try {
             // 1. Пропускаем публичные эндпоинты
             String path = request.getRequestURI();
-            if (path.startsWith("/api/users/login") ||
-                    path.startsWith("/api/users/register")) {
+            if (path.startsWith("/api/auth/") || path.equals("/error")) {
                 filterChain.doFilter(request, response);
                 return;
             }
@@ -57,8 +53,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             // 3. Извлекаем токен
             final String jwt = authHeader.substring(7);
 
-            // 4. Проверяем валидность токена
-            if (!jwtService.isTokenValid(jwt)) {
+            // 4. Проверяем тип токена (должен быть access) Проверяем валидность токена
+            if (!jwtService.validateAccessToken(jwt)) {
                 response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid token");
                 return;
             }
@@ -97,7 +93,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             tokenUsageService.markTokenAsUsed(jwt, expiry);
 
             // 10. Генерируем новый токен
-            String newToken = jwtService.generateToken(userDetails);
+            String newToken = jwtService.generateAccessToken(userDetails);
             response.setHeader("New-Access-Token", newToken);
 
 
@@ -106,8 +102,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         } catch (Exception e) {
             // Обработка непредвиденных ошибок
-            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-                    "Authentication failed: " + e.getMessage());
+            throw new RuntimeException("Authentication failed:", e);
+//            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+//                    "Authentication failed: " + e.getMessage());
         }
     }
 }

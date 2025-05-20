@@ -1,28 +1,38 @@
-package com.example.demo.models;
+package com.example.demo.Models;
 
 import com.example.demo.Models.UserRole;
 import java.util.Objects;
 
 public class UserModel {
-    private String token;
+    private String accessToken;
+    private String refreshToken;
     private UserRole role;
 
     // Конструкторы
     public UserModel() {
     }
 
-    public UserModel(String token, UserRole role) {
-        this.token = token;
+    public UserModel(String accessToken, String refreshToken, UserRole role) {
+        this.accessToken = accessToken;
+        this.refreshToken = refreshToken;
         this.role = role;
     }
 
     // Геттеры и сеттеры
-    public String getToken() {
-        return token;
+    public String getAccessToken() {
+        return accessToken;
     }
 
-    public void setToken(String token) {
-        this.token = token;
+    public void setAccessToken(String accessToken) {
+        this.accessToken = accessToken;
+    }
+
+    public String getRefreshToken() {
+        return refreshToken;
+    }
+
+    public void setRefreshToken(String refreshToken) {
+        this.refreshToken = refreshToken;
     }
 
     public UserRole getRole() {
@@ -39,19 +49,20 @@ public class UserModel {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         UserModel userModel = (UserModel) o;
-        return Objects.equals(token, userModel.token) && role == userModel.role;
+        return Objects.equals(accessToken, userModel.accessToken) && Objects.equals(refreshToken, userModel.refreshToken) && role == userModel.role;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(token, role);
+        return Objects.hash(accessToken, refreshToken, role);
     }
 
     // toString()
     @Override
     public String toString() {
         return "UserModel{" +
-                "token='" + token + '\'' +
+                "accessToken='" + accessToken + '\'' +
+                "refreshToken='" + refreshToken + '\'' +
                 ", role=" + role +
                 '}';
     }
