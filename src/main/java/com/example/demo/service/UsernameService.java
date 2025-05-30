@@ -2,14 +2,12 @@ package com.example.demo.service;
 
 import com.example.demo.Models.Order;
 import com.example.demo.Models.Username;
-import com.example.demo.config.JwtService;
 import com.example.demo.repository.UsernameRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -116,9 +114,8 @@ public class UsernameService {
     }
 
     @Transactional
-    public void changePassword(String oldPassword, String newPassword) {
-        // 1. Получаем текущего пользователя из SecurityContext
-        String login = SecurityContextHolder.getContext().getAuthentication().getName();
+    public void changePassword(String login, String oldPassword, String newPassword) {
+        // 1. Получаем текущего пользователя
         Username user = usernameRepository.findByLogin(login);
         if (user == null) {
             throw new RuntimeException("Пользователь не найден!");

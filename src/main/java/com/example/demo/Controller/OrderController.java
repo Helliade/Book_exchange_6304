@@ -2,7 +2,7 @@ package com.example.demo.Controller;
 
 import com.example.demo.DTO.OrderDTO;
 import com.example.demo.Models.Order;
-import com.example.demo.config.JwtService;
+import com.example.demo.service.JwtService;
 import com.example.demo.service.OrderService;
 import com.example.demo.service.UsernameService;
 import jakarta.persistence.EntityNotFoundException;

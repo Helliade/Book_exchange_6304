@@ -1,0 +1,65 @@
+/* 1) Основная вёрстка страницы */
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    font-family: 'Jost', sans-serif;
+}
+body {
+    display: flex;
+    flex-direction: column;
+}
+/* 2) Навбар закрепляем наверху */
+nav.navbar {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 1000;
+}
+/* 3) Контент между навбаром и футером */
+main {
+    flex: 1;
+    /* отступы, чтобы ничего не заезжало под navbar/footer */
+    padding-top: 4rem;
+    padding-bottom: 4rem;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #f0f0e8; /* или любой светлый фон страницы */
+}
+/* 4) Футер закрепляем внизу */
+footer.footer {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    background: #f8f9fa;
+}
+/* 5) Тёмный прямоугольник с закруглёнными концами */
+    .welcome-box {
+    background-color: #343a40;
+    color: #fff;
+    padding: 2rem 3rem;
+    border-radius: 2rem;
+    text-align: center;
+}
+.welcome-box h1 {
+    margin-bottom: 1rem;
+    font-size: 2.5rem;
+}
+/* 6) Контрастный овал для ссылок */
+    .action-oval {
+    display: inline-block;
+    background-color: #f0f0e8;
+    padding: 0.5rem 1rem;
+    border-radius: 2rem;
+    margin: 0 0.5rem;
+}
+.action-oval a {
+    color: #6c757d;
+    text-decoration: none;
+    font-weight: bold;
+}
+.action-oval a:hover {
+    text-decoration: underline;
+}

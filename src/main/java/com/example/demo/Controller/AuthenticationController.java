@@ -2,11 +2,12 @@ package com.example.demo.Controller;
 
 import com.example.demo.DTO.UsernameDTO;
 import com.example.demo.Models.Username;
-import com.example.demo.config.JwtService;
+import com.example.demo.service.JwtService;
 import com.example.demo.service.OrderService;
 import com.example.demo.service.UsernameService;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -21,6 +22,9 @@ public class AuthenticationController {
     private final UsernameService usernameService;
     private final OrderService orderService;
     private final UserDetailsService userDetailsService;
+
+    public record Request(String login, String rawPassword){}
+    public record ChangePasswordRequest(String login, String rawPassword, String newPassword) {}
 
     public AuthenticationController(JwtService jwtService, UsernameService usernameService, OrderService orderService, UserDetailsService userDetailsService) {
         this.jwtService = jwtService;
@@ -40,14 +44,14 @@ public class AuthenticationController {
         }
     }
 
-    @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestParam String login, @RequestParam String rawPassword) {
+    @PostMapping(value = "/login", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> login(@RequestBody Request request) {
 
         try {
-            Username user = new Username(login, rawPassword);
+            Username user = new Username(request.login, request.rawPassword);
             String accessToken = usernameService.verify(user);
 
-            UserDetails userDetails = userDetailsService.loadUserByUsername(login);
+            UserDetails userDetails = userDetailsService.loadUserByUsername(request.login);
             String refreshToken = jwtService.generateRefreshToken(userDetails);
 
             return ResponseEntity.ok(new com.example.demo.Models.UserModel(accessToken, refreshToken, user.getRole()));
@@ -100,9 +104,9 @@ public class AuthenticationController {
 
     // Эндпоинт для смены пароля
     @PostMapping("/change-password")
-    public ResponseEntity<?> changePassword(@RequestParam String oldPassword, @RequestParam String newPassword) {
+    public ResponseEntity<?> changePassword(@RequestBody ChangePasswordRequest request) {
         try {
-            usernameService.changePassword(oldPassword, newPassword);
+            usernameService.changePassword(request.login, request.rawPassword, request.newPassword);
             return ResponseEntity.ok("Password changed successfully");
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
