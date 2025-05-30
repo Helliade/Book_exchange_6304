@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:replace="${title}">Главная страница</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+</head>
+
+<body>
+<!-- Навигационная панель -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container">
+        <a class="navbar-brand" th:href="@{/}">КнигоОбмен</a>
+        <div class="collapse navbar-collapse">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/catalog}">Каталог</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/history}">История заказов</a>
+                </li>
+                <li class="nav-item">
+                <a class="nav-link" th:href="@{/order}">Корзина</a>
+                </li>
+            </ul>
+            <ul class="navbar-nav">
+                <li class="nav-item" sec:authorize="isAuthenticated()">
+                    <a class="nav-link" th:href="@{/logout}">Выйти</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<!-- Основное содержимое -->
+<div class="container mt-4">
+    <!-- Форма фильтрации -->
+    <form th:action="@{/}" method="get" class="row g-3 mb-4">
+        <!-- Поиск по названию -->
+        <div class="col-md-4">
+            <input type="text" class="form-control"
+                   placeholder="Поиск по названию"
+                   name="search"
+                   th:value="${param.search}">
+        </div>
+
+        <!-- Год издания -->
+        <div class="col-md-2">
+            <input type="number" class="form-control"
+                   placeholder="Год издания"
+                   name="yearOfPubl"
+                   th:value="${param.yearOfPubl}">
+        </div>
+
+        <!-- Издательство -->
+        <div class="col-md-2">
+            <input type="text" class="form-control"
+                   placeholder="Издательство"
+                   name="publHouse"
+                   th:value="${param.publHouse}">
+        </div>
+
+        <!-- Язык -->
+        <div class="col-md-2">
+            <input type="text" class="form-control"
+                   placeholder="Язык"
+                   name="language"
+                   th:value="${param.language}">
+        </div>
+
+        <!-- Состояние книги -->
+        <div class="col-md-2">
+            <select class="form-select" name="condit">
+                <option value="">Все состояния</option>
+                <option th:each="cond : ${validCondit}"
+                        th:value="${cond}"
+                        th:text="${cond == 'PERFECT' ? 'Отличное' :
+                         cond == 'HAS_FLAWS' ? 'Есть дефекты' :
+                         'Повреждённая'}"
+                        th:selected="${param.condit == cond}">
+                </option>
+            </select>
+        </div>
+
+        <!-- Статус книги -->
+        <div class="col-md-2">
+            <select class="form-select" name="status">
+                <option value="">Все статусы</option>
+                <option th:each="statusOpt : ${T(com.example.demo.service.BookValidator).getValidStatuses()}"
+                        th:value="${statusOpt}"
+                        th:text="${#strings.capitalize(statusOpt.toLowerCase())}"
+                        th:selected="${param.status == statusOpt}">
+                </option>
+            </select>
+        </div>
+
+        <!-- Кнопки -->
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-primary w-100">Применить</button>
+        </div>
+        <div class="col-md-2">
+            <a th:href="@{/}" class="btn btn-outline-secondary w-100">Сбросить</a>
+        </div>
+    </form>
+</div>
+<!-- Список книг -->
+<div class="row">
+    <div th:each="book : ${books}" class="col-md-4 mb-4">
+        <div class="card h-100">
+            <!-- Изображение книги -->
+            <img th:if="${book.imageUrl}" th:src="@{${book.imageUrl}}" class="card-img-top" alt="Обложка книги">
+            <img th:unless="${book.imageUrl}" th:src="@{/images/placeholder.jpg}" class="card-img-top" alt="Нет изображения">
+
+            <div class="card-body">
+                <h5 class="card-title" th:text="${book.works?[0]?.title} ?? 'Без названия'"></h5>
+                <p class="card-text">
+                    <strong>Год:</strong> <span th:text="${book.yearOfPubl}"></span><br>
+                    <strong>Издательство:</strong> <span th:text="${book.publHouse}"></span><br>
+                    <strong>Язык:</strong> <span th:text="${book.language}"></span><br>
+                    <strong>Состояние:</strong>
+                    <span th:text="${book.condit == 'PERFECT' ? 'Отличное' :
+                                      book.condit == 'HAS_FLAWS' ? 'Есть дефекты' :
+                                      'Повреждённая'}"></span><br>
+                    <strong>Статус:</strong>
+                    <span th:class="${book.status == 'FREE' ? 'text-success' :
+                                       book.status == 'BOOKED' ? 'text-warning' :
+                                       'text-danger'}"
+                          th:text="${book.status == 'FREE' ? 'Доступна' :
+                                      book.status == 'BOOKED' ? 'Забронирована' :
+                                      'Выдана'}"></span>
+                </p>
+                <div class="d-flex justify-content-between">
+                    <a th:href="@{/product/{id}(id=${book.id})}"
+                       class="btn btn-primary">Подробнее</a>
+                    <button class="btn btn-success"
+                            th:disabled="${book.status != 'FREE'}"
+                            th:attr="data-book-id=${book.id}">В корзину</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Подвал -->
+<footer class="footer mt-auto py-3 bg-light">
+    <div class="container text-center">
+        <span class="text-muted">© 2025 КнигоОбмен</span>
+    </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script th:src="@{/js/main.js}"></script>
+</body>
+</html>

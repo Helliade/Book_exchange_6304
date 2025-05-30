@@ -4,8 +4,8 @@ import com.example.demo.DTO.OrderDTO;
 import com.example.demo.DTO.UsernameDTO;
 import com.example.demo.Models.Order;
 import com.example.demo.Models.Username;
-import com.example.demo.config.JwtService;
-import com.example.demo.config.TokenUsageService;
+import com.example.demo.service.JwtService;
+import com.example.demo.service.TokenUsageService;
 import com.example.demo.service.OrderService;
 import com.example.demo.service.UsernameService;
 import jakarta.persistence.EntityNotFoundException;
@@ -21,7 +21,7 @@ import java.util.List;
 
 //        GET    /api/users                   - Получить всех пользователей
 //        GET    /api/users/{userId}          - Получить пользователя по ID
-//        GET    /api/users/{userId}/search   - Фильтрация заказов по типу и/или статусу у определенного пользователя
+//        GET    /api/users/search   - Фильтрация заказов по типу и/или статусу у определенного пользователя
 //                                            + Вывод всех заказов
 //   #-----     PUT/PATCH    /api/users/{userId}           - Обновить пользователя
 //        DELETE /api/users/{userId}          - Удалить пользователя
@@ -37,14 +37,12 @@ public class UsernameController {
     private final UsernameService usernameService;
     private final OrderService orderService;
     private final JwtService jwtService;
-    private final TokenUsageService tokenUsageService;
 
     @Autowired
-    public UsernameController(UsernameService usernameService, OrderService orderService, JwtService jwtService, TokenUsageService tokenUsageService) {
+    public UsernameController(UsernameService usernameService, OrderService orderService, JwtService jwtService) {
         this.usernameService = usernameService;
         this.orderService = orderService;
         this.jwtService = jwtService;
-        this.tokenUsageService = tokenUsageService;
     }
 
 //GET
@@ -65,13 +63,15 @@ public class UsernameController {
     }
 
     //TODO может переписать, чтобы ID брался через токен?
-    @GetMapping("/{userId}/search")
+    @GetMapping("/search")
     public ResponseEntity<?> getOrdersByUserIdAndArguments(
-            @PathVariable Long userId,
             @RequestParam(required = false) String type,
-            @RequestParam(required = false) String status) {
+            @RequestParam(required = false) String status,
+            @RequestHeader("Authorization") String authHeader) {
 
         try {
+            String token = authHeader.substring(7); // Убираем "Bearer "
+            Long userId = jwtService.extractUsernameModel(token).getId();
             List<OrderDTO> result = new LinkedList<>();
             for (Order order : orderService.getOrdersByUserIdAndArguments(userId, type, status)) {
                 result.add(new OrderDTO(order));
@@ -80,6 +80,9 @@ public class UsernameController {
 
         } catch (EntityNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Ошибка сервера: " + e.getMessage());
         }
     }
 
