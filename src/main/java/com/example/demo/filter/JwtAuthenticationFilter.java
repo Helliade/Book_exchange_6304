@@ -99,7 +99,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             // 10. Генерируем новый токен
             String newToken = jwtService.generateAccessToken(userDetails);
-            response.setHeader("New-Access-Token", newToken);
+            response.setHeader("accessToken", newToken);
 
 
             // 11. Продолжаем цепочку фильтров
@@ -121,6 +121,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 path.startsWith("/auth") ||
                 path.startsWith("/home") ||
                 path.startsWith("/history") ||
+                path.startsWith("/order") ||
                 path.startsWith("/hello") ||
                 path.endsWith(".html") ||
                 path.startsWith("/css/") ||

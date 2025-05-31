@@ -92,8 +92,8 @@ public class AuthenticationController {
             UserDetails userDetails = userDetailsService.loadUserByUsername(login);
 
             return ResponseEntity.ok(Map.of(
-                    "access_token", jwtService.generateAccessToken(userDetails),
-                    "refresh_token", refreshToken,
+                    "accessToken", jwtService.generateAccessToken(userDetails),
+                    "refreshToken", refreshToken,
                     "expires_in", jwtService.getRemainingTokenExpiration(refreshToken) / 1000
             ));
         } catch (Exception e) {

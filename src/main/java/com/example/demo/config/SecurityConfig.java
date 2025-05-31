@@ -69,6 +69,7 @@ public class SecurityConfig {
                                         "/auth",
                                         "/home",
                                         "/history",
+                                        "/order",
                                         "/css/**",
                                         "/js/**",
                                         "/images/**",

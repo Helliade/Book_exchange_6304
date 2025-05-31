@@ -21,8 +21,8 @@ import java.util.List;
 
 //        GET    /api/users                   - Получить всех пользователей
 //        GET    /api/users/{userId}          - Получить пользователя по ID
-//        GET    /api/users/search   - Фильтрация заказов по типу и/или статусу у определенного пользователя
-//                                            + Вывод всех заказов
+//        GET    /api/users/search   - Фильтрация заказов по типу и/или статусу у определенного пользователя + Вывод всех заказов
+//        GET    /api/users/cart              - Вывод корзин
 //   #-----     PUT/PATCH    /api/users/{userId}           - Обновить пользователя
 //        DELETE /api/users/{userId}          - Удалить пользователя
 
@@ -62,7 +62,7 @@ public class UsernameController {
         return new UsernameDTO(usernameService.getUsernameById(userId));
     }
 
-    //TODO может переписать, чтобы ID брался через токен?
+    //TODO ID берется через токен!!!!!
     @GetMapping("/search")
     public ResponseEntity<?> getOrdersByUserIdAndArguments(
             @RequestParam(required = false) String type,
@@ -74,9 +74,34 @@ public class UsernameController {
             Long userId = jwtService.extractUsernameModel(token).getId();
             List<OrderDTO> result = new LinkedList<>();
             for (Order order : orderService.getOrdersByUserIdAndArguments(userId, type, status)) {
-                result.add(new OrderDTO(order));
+                if (!"CART".equals(order.getStatus()))
+                    result.add(new OrderDTO(order));
             }
+//            if ("CART".equals(status) && result.isEmpty())
+//                result.add(new OrderDTO(orderService.createOrder(jwtService.extractUsernameModel(token))));
+
             return ResponseEntity.ok(result);                        //Возвращаем DTO с HTTP 200
+
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Ошибка сервера: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/cart")
+    public ResponseEntity<?> getCartsByType(
+            @RequestParam String type,
+            @RequestHeader("Authorization") String authHeader) {
+
+        try {
+            String token = authHeader.substring(7); // Убираем "Bearer "
+            Long userId = jwtService.extractUsernameModel(token).getId();
+            Order order = orderService.getCartByUserIdAndType(userId, type);
+
+
+            return ResponseEntity.ok(new OrderDTO(order));                        //Возвращаем DTO с HTTP 200
 
         } catch (EntityNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
