@@ -1,3 +1,5 @@
+import { authFetch, showNotification, refreshTokens, redirectToAuth, setAuthHeader, logout, setupLogoutButton } from './utils.js';
+
 document.addEventListener('DOMContentLoaded', async () => {
     // Извлекаем токен из URL и сохраняем в localStorage
     const urlParams = new URLSearchParams(window.location.search);
@@ -16,6 +18,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.location.href = '/auth';
         return;
     }
+    setupLogoutButton();
 
     // Установите токен в заголовки по умолчанию
     setAuthHeader(accessToken);
@@ -25,7 +28,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         await loadBooks(accessToken);
     } catch (error) {
         console.error('Failed to load books:', error);
-        showError('Не удалось загрузить книги. Попробуйте позже.');
+        showNotification('Не удалось загрузить книги. Попробуйте позже.', 'error');
     }
 
     // Добавляем обработчики для кнопок фильтров
@@ -92,101 +95,8 @@ async function loadBooks(token) {
         renderBooks(books);
     } catch (error) {
         console.error('Error loading books:', error);
-        showError('Не удалось загрузить книги. Попробуйте позже.');
+        showNotification('Не удалось загрузить книги. Попробуйте позже.', 'error');
         throw error;
-    }
-}
-
-async function authFetch(url, options = {}) {
-    const token = localStorage.getItem('accessToken');
-    const refreshToken = localStorage.getItem('refreshToken');
-
-    if (!token || !refreshToken) {
-        redirectToAuth();
-        return Promise.reject('No tokens available');
-    }
-
-    // Устанавливаем заголовки авторизации
-    options.headers = {
-        ...options.headers,
-        'Authorization': `Bearer ${token}`,
-        'RefreshToken': refreshToken,
-        'Content-Type': 'application/json'
-    };
-
-    try {
-        let response = await fetch(url, options);
-
-        // Если токен устарел (401), пробуем обновить
-        if (response.status === 401) {
-            console.log('Access token expired, trying to refresh...');
-
-            try {
-                const newTokens = await refreshToken();
-
-                if (newTokens) {
-                    // Обновляем токены в localStorage
-                    localStorage.setItem('accessToken', newTokens.accessToken);
-                    localStorage.setItem('refreshToken', newTokens.refreshToken);
-
-                    // Повторяем запрос с новыми токенами
-                    options.headers['Authorization'] = `Bearer ${newTokens.accessToken}`;
-                    options.headers['RefreshToken'] = newTokens.refreshToken;
-
-                    return fetch(url, options);
-                } else {
-                    // Не удалось обновить токен - перенаправляем на авторизацию
-                    redirectToAuth();
-                    return Promise.reject('Failed to refresh token');
-                }
-            } catch (refreshError) {
-                console.error('Token refresh failed:', refreshError);
-                redirectToAuth();
-                return Promise.reject(refreshError);
-            }
-        }
-
-        return response;
-    } catch (error) {
-        console.error('Request failed:', error);
-        throw error;
-    }
-}
-
-async function refreshToken() {
-    try {
-        const refreshToken = localStorage.getItem('refreshToken');
-        const accessToken = localStorage.getItem('accessToken');
-
-        const response = await fetch('/api/auth/refresh', {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${accessToken}`,
-                'RefreshToken': refreshToken,
-                'Content-Type': 'application/json'
-            }
-        });
-
-        if (!response.ok) {
-            throw new Error('Refresh failed');
-        }
-
-        const data = await response.json();
-        const newAccessToken = data.access_token || data.accessToken;
-        const newRefreshToken = data.refresh_token || data.refreshToken;
-
-        // Сохраняем новые токены
-        localStorage.setItem('accessToken', newAccessToken);
-        localStorage.setItem('refreshToken', newRefreshToken);
-
-        return {
-            accessToken: newAccessToken,
-            refreshToken: newRefreshToken
-        };
-    } catch (error) {
-        console.error('Token refresh failed:', error);
-        redirectToAuth();
-        return null;
     }
 }
 
@@ -197,7 +107,7 @@ function renderBooks(books) {
     container.innerHTML = '';
 
     if (!books || books.length === 0) {
-        container.innerHTML = '<p class="text-muted">Книги не найдены</p>';
+        showNotification('Книги по заданным фильтрам не найдены', 'info');
         return;
     }
 
@@ -286,7 +196,7 @@ function renderBooks(books) {
                     bottom.classList.remove('clicked');
                 }, 3000);
             } catch (error) {
-                showError('Не удалось добавить книгу в корзину');
+                showNotification('Не удалось добавить книгу в корзину', 'error');
             }
         });
     });
@@ -304,31 +214,4 @@ async function addToCart(bookId) {
     if (!response.ok) {
         throw new Error('Failed to add to cart');
     }
-}
-
-function redirectToAuth() {
-    // Очищаем токены и редиректим
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
-    window.location.href = '/auth';
-}
-
-function showError(message) {
-    const alert = document.createElement('div');
-    alert.className = 'alert alert-danger position-fixed top-0 end-0 m-3';
-    alert.textContent = message;
-    document.body.appendChild(alert);
-
-    setTimeout(() => alert.remove(), 5000);
-}
-
-function setAuthHeader(token) {
-    const originalFetch = window.fetch;
-    window.fetch = async (url, options = {}) => {
-        options.headers = options.headers || {};
-        if (!options.headers['Authorization'] && token) {
-            options.headers['Authorization'] = `Bearer ${token}`;
-        }
-        return originalFetch(url, options);
-    };
 }

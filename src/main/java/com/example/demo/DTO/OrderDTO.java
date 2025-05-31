@@ -13,14 +13,14 @@ public class OrderDTO {
     private String type;
     private String status;
     private Long userId;
-    private Set<BookShortDTO> books;
+    private Set<BookDTO> books;
 
     //Геттеры
     public Long getId() { return id; }
     public String getType() { return type; }
     public String getStatus() { return status; }
     public Long getUserId() { return userId; }
-    public Set<BookShortDTO> getBooks() { return books; }
+    public Set<BookDTO> getBooks() { return books; }
 
 
     public OrderDTO(Order order) {
@@ -28,7 +28,7 @@ public class OrderDTO {
         this.type = order.getType();
         this.status = order.getStatus();
         this.userId = order.getUser().getId();
-        this.books = BookShortDTO.convertBooksToShortDTO(order.getBooks());
+        this.books = BookDTO.convertBooksToDTO(order.getBooks());
     }
 
     public List<OrderDTO> ListToOrderDTO(List<Order> orders) {

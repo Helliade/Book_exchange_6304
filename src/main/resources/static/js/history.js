@@ -1,3 +1,5 @@
+import { authFetch, showNotification, refreshTokens, redirectToAuth, setAuthHeader, showSuccess, logout, setupLogoutButton } from './utils.js';
+
 document.addEventListener('DOMContentLoaded', async () => {
     // Извлекаем токен из URL и сохраняем в localStorage
     const urlParams = new URLSearchParams(window.location.search);
@@ -16,6 +18,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.location.href = '/auth';
         return;
     }
+    setupLogoutButton();
 
     // Установите токен в заголовки по умолчанию
     setAuthHeader(accessToken);
@@ -25,7 +28,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         await loadOrders(accessToken);
     } catch (error) {
         console.error('Failed to load orders:', error);
-        showError('Не удалось загрузить историю заказов. Попробуйте позже.');
+        showNotification('Не удалось загрузить историю заказов. Попробуйте позже.', 'error');
     }
 
     // Добавляем обработчики для кнопок фильтров
@@ -42,9 +45,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
 
             const response = await authFetch(`/api/users/search?${queryString}`);
-            if (response.ok) {
-                const orders = await response.json();
-                renderOrders(orders);
+            if (!response.ok) throw new Error('Filter request failed');
+
+            const orders = await response.json();
+            renderOrders(orders);
+
+            if (orders.length === 0) {
+                showNotification('Заказы по заданным фильтрам не найдены', 'info');
             }
         } catch (error) {
             console.error('Filter error:', error);
@@ -66,13 +73,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 async function loadOrders(token) {
     try {
-        const response = await fetch('/api/users/search', {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
+        const response = await authFetch('/api/users/search', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            }
+        });
 
         if (response.status === 403) {
             throw new Error('Доступ запрещен. Недостаточно прав.');
@@ -83,23 +90,17 @@ async function loadOrders(token) {
             try {
                 const newTokens = await refreshToken();
                 if (newTokens) {
-                    const newResponse = await fetch('/api/users/search', {
-                        method: 'GET',
-                        headers: {
-                            'Authorization': `Bearer ${newTokens.accessToken}`,
-                            'Content-Type': 'application/json'
-                        }
-                    });
+                    const newResponse = authFetch('/api/users/search');
                     if (!newResponse.ok) throw new Error(`HTTP error! status: ${newResponse.status}`);
-                        const orders = await newResponse.json();
-                        renderOrders(orders);
-                        return; // Завершаем выполнение после успешного обновления
+                    const orders = await newResponse.json();
+                    renderOrders(orders);
+                    return; // Завершаем выполнение после успешного обновления
                 } else {
-                    redirectToLogin();
+                    redirectToAuth();
                     return Promise.reject('Failed to refresh token');
                 }
             } catch (refreshError) {
-                redirectToLogin();
+                redirectToAuth();
                 return Promise.reject(refreshError);
             }
         }
@@ -112,100 +113,8 @@ async function loadOrders(token) {
         renderOrders(orders);
     } catch (error) {
         console.error('Error loading orders:', error);
-        showError('Не удалось загрузить заказы. Попробуйте позже.');
+        showNotification('Не удалось загрузить заказы. Попробуйте позже.', 'error');
         renderOrders([]);
-    }
-}
-
-async function authFetch(url, options = {}) {
-    const token = localStorage.getItem('accessToken');
-    const refreshToken = localStorage.getItem('refreshToken');
-
-    if (!token || !refreshToken) {
-        redirectToAuth();
-        return Promise.reject('No tokens available');
-    }
-
-    // Устанавливаем заголовки авторизации
-    options.headers = {
-        ...options.headers,
-        'Authorization': `Bearer ${token}`,
-        'RefreshToken': refreshToken,
-        'Content-Type': 'application/json'
-    };
-
-    try {
-        let response = await fetch(url, options);
-
-        // Если токен устарел (401), пробуем обновить
-        if (response.status === 401) {
-            console.log('Access token expired, trying to refresh...');
-
-            try {
-                const newTokens = await refreshToken();
-
-                if (newTokens) {
-                    // Обновляем токены в localStorage
-                    localStorage.setItem('accessToken', newTokens.accessToken);
-                    localStorage.setItem('refreshToken', newTokens.refreshToken);
-
-                    // Повторяем запрос с новыми токенами
-                    options.headers['Authorization'] = `Bearer ${newTokens.accessToken}`;
-                    options.headers['RefreshToken'] = newTokens.refreshToken;
-
-                    return fetch(url, options);
-                } else {
-                    // Не удалось обновить токен - перенаправляем на авторизацию
-                    redirectToAuth();
-                    return Promise.reject('Failed to refresh token');
-                }
-            } catch (refreshError) {
-                console.error('Token refresh failed:', refreshError);
-                redirectToAuth();
-                return Promise.reject(refreshError);
-            }
-        }
-
-        return response;
-    } catch (error) {
-        console.error('Request failed:', error);
-        throw error;
-    }
-}
-
-async function refreshToken() {
-    try {
-        const refreshToken = localStorage.getItem('refreshToken');
-        const accessToken = localStorage.getItem('accessToken');
-
-        const response = await fetch('/api/auth/refresh', {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${accessToken}`,
-                'RefreshToken': refreshToken,
-                'Content-Type': 'application/json'
-            }
-        });
-
-        if (!response.ok) {
-            throw new Error('Refresh failed');
-        }
-
-        const data = await response.json();
-        const newAccessToken = data.access_token || data.accessToken;
-        const newRefreshToken = data.refresh_token || data.refreshToken;
-
-        localStorage.setItem('accessToken', newAccessToken);
-        localStorage.setItem('refreshToken', newRefreshToken);
-
-        return {
-            accessToken: newAccessToken,
-            refreshToken: newRefreshToken
-        };
-    } catch (error) {
-        console.error('Token refresh failed:', error);
-        redirectToAuth();
-        return null;
     }
 }
 
@@ -217,7 +126,7 @@ function renderOrders(orders) {
     if (emptyMessage) emptyMessage.style.display = 'none'; // Проверка на существование
 
     if (!orders || orders.length === 0) {
-        container.innerHTML = '<p class="text-muted">Заказы не найдены</p>';
+        showNotification('Заказы по заданным фильтрам не найдены', 'info');
         return;
     }
 
@@ -226,22 +135,30 @@ function renderOrders(orders) {
     orders.forEach((order, index) => {
         const row = document.createElement('tr');
         
-        // Список книг
+        // Форматирование списка книг
         const booksList = order.books.map(book => {
-            const bookYear = book.yearOfPubl || 'Год не указан';
-            const publisher = book.publHouse || 'Не указано';
-            const statusClass = (book.status || 'unknown').toLowerCase();
+            const bookYear = book.yearOfPubl || 'не указан';
+            const publisher = book.publHouse || 'не указано';
+
             const worksList = (book.works || [])
-                .map(w => `<li>${w.name}, ${w.writer}</li>`)
+                .map(w => `<li>${w.name}${w.writer ? `, ${w.writer}` : ''}</li>`)
                 .join('');
-            
-            return `<div class="book-info">
-                <div class="book-year">${bookYear}</div>
-                <div class="book-publ">${publisher}</div>
-                <div class="book-status">${statusClass}</div>
-                <div class="book-works">${worksList}</div>
-            </div>`;
-        }).join('');
+
+            return `
+                <div class="book-card">
+                    <div class="book-meta">
+                        <div><strong>Год издания:</strong> ${bookYear}</div>
+                        <div><strong>Издательство:</strong> ${publisher}</div>
+                    </div>
+                    ${book.works?.length ? `
+                    <div class="book-works">
+                        <strong>Произведения:</strong>
+                        <ul>${worksList}</ul>
+                    </div>
+                    ` : ''}
+                </div>
+            `;
+        }).join('<hr class="book-divider">');
         
         // Кнопка "Отменить" для незавершенных заказов ?????????????????????????????? \/
         const cancelButton = (order.status !== 'COMPLETED' && order.status !== 'CANCELLED') 
@@ -272,7 +189,7 @@ function renderOrders(orders) {
                 await loadOrders();
                 showSuccess('Заказ успешно отменен');
             } catch (error) {
-                showError('Не удалось отменить заказ');
+                showNotification('Не удалось отменить заказ', 'error');
             }
         });
     });
@@ -300,43 +217,4 @@ async function updateOrderStatus(orderId, status) {
     if (!response.ok) {
         throw new Error('Failed to update order status');
     }
-}
-
-function redirectToAuth() {
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
-    window.location.href = '/auth';
-}
-
-function showError(message) {
-    const alert = document.createElement('div');
-    alert.className = 'alert alert-danger position-fixed top-0 end-0 m-3';
-    alert.textContent = message;
-    document.body.appendChild(alert);
-
-    setTimeout(() => alert.remove(), 5000);
-}
-
-function showSuccess(message) {
-    const alert = document.createElement('div');
-    alert.className = 'alert alert-success position-fixed top-0 end-0 m-3';
-    alert.textContent = message;
-    document.body.appendChild(alert);
-
-    setTimeout(() => alert.remove(), 5000);
-}
-
-function setAuthHeader(token) {
-    const originalFetch = window.fetch;
-    window.fetch = async (url, options = {}) => {
-        options.headers = options.headers || {};
-        if (!options.headers['Authorization'] && token) {
-            options.headers['Authorization'] = `Bearer ${token}`;
-        }
-        return originalFetch(url, options);
-    };
-}
-
-function redirectToLogin() {
-    window.location.href = '/auth'; // или ваш URL для страницы входа
 }

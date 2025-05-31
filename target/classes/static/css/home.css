@@ -230,6 +230,315 @@ html, body{
 }
 
 
+/* Основные стили таблицы */
+.order-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: #fff;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    margin-bottom: 2rem;
+}
+
+.order-table th {
+    background-color: #2c3e50;
+    color: white;
+    font-weight: 600;
+    padding: 15px;
+    text-align: left;
+}
+
+.order-table td {
+    padding: 15px;
+    border-bottom: 1px solid #e0e0e0;
+    vertical-align: top;
+}
+
+.order-table tr:last-child td {
+    border-bottom: none;
+}
+
+.order-table tr:hover td {
+    background-color: #f8f9fa;
+}
+
+/* Стили для бейджей статусов */
+.status-badge {
+    display: inline-block;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-right: 10px;
+}
+
+.status-CREATED {
+    background-color: #e3f2fd;
+    color: #1976d2;
+}
+
+.status-IN_TRANSIT {
+    background-color: #fff8e1;
+    color: #ff8f00;
+}
+
+.status-DELIVERY_READY {
+    background-color: #e8f5e9;
+    color: #388e3c;
+}
+
+.status-COMPLETED {
+    background-color: #f5f5f5;
+    color: #616161;
+}
+
+.status-CANCELLED {
+    background-color: #ffebee;
+    color: #d32f2f;
+}
+
+/* Стили для бейджей типа заказа */
+.type-badge {
+    display: inline-block;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.type-badge {
+    background-color: #e0f7fa;
+    color: #00acc1;
+}
+
+/* Стили для информации о книгах */
+.book-info {
+    margin-bottom: 10px;
+    padding: 10px;
+    background-color: #f5f5f5;
+    border-radius: 5px;
+}
+
+.book-info:last-child {
+    margin-bottom: 0;
+}
+
+.book-year {
+    font-size: 0.8rem;
+    color: #757575;
+}
+
+.book-publ {
+    font-weight: 600;
+    margin: 5px 0;
+}
+
+.book-status {
+    display: inline-block;
+    padding: 3px 8px;
+    background-color: #e0e0e0;
+    border-radius: 3px;
+    font-size: 0.75rem;
+    margin-top: 5px;
+}
+
+.book-works ul {
+    margin: 5px 0 0 0;
+    padding-left: 15px;
+}
+
+.book-works li {
+    font-size: 0.85rem;
+    color: #616161;
+}
+
+/* Стили для кнопки отмены */
+.cancel-order {
+    transition: all 0.3s ease;
+    margin-left: 10px;
+}
+
+.cancel-order:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+/* Стили для пустого состояния */
+.empty-orders {
+    text-align: center;
+    padding: 50px;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    margin-top: 20px;
+}
+
+.empty-orders i.material-icons {
+    font-size: 60px;
+    color: #bdbdbd;
+    margin-bottom: 20px;
+}
+
+.empty-orders h3 {
+    color: #424242;
+    margin-bottom: 10px;
+}
+
+.empty-orders p {
+    color: #757575;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .order-table {
+        display: block;
+        overflow-x: auto;
+    }
+
+    .order-table th,
+    .order-table td {
+        padding: 10px;
+    }
+}
+
+/* Анимация загрузки */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.order-table tbody tr {
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+
+/* Эффекты при наведении */
+.order-table tr {
+    transition: all 0.3s ease;
+}
+
+.order-table tr:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+
+
+/* Стили для корзины */
+/* Обновленные стили для кнопок корзины */
+.order-type-btn {
+    transition: all 0.3s ease;
+    padding: 10px 15px;
+    white-space: nowrap;
+    background-color: #A6CDDE; /* Голубой из вашей палитры */
+    color: #00394B; /* Темно-синий для контраста */
+    border: none;
+    font-weight: 600;
+    border-radius: 8px;
+    margin-right: 5px;
+}
+
+.order-type-btn.active {
+    background-color: #254053; /* Темно-синий из вашей палитры */
+    color: white;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.order-type-btn:not(.active):hover {
+    background-color: #8cb3c9;
+}
+
+.checkout-btn {
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    padding: 10px 15px;
+    background-color: #c8e6c9; /* Пастельный зеленый из вашей палитры */
+    color: #256029; /* Темно-зеленый для контраста */
+    border: none;
+    font-weight: 600;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.checkout-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    background-color: #a5d6a7;
+}
+
+.remove-from-cart-btn {
+    transition: all 0.3s ease;
+}
+
+.remove-from-cart-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.card {
+    transition: all 0.3s ease;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.status-pill {
+    display: inline-block;
+    padding: 0.2em 0.8em;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: white;
+}
+
+.status-perfect {
+    background-color: #28a745;
+}
+
+.status-has_flaws {
+    background-color: #ffc107;
+    color: #212529;
+}
+
+.status-damaged {
+    background-color: #dc3545;
+}
+
+.status-unknown {
+    background-color: #6c757d;
+}
+
+
+
+/* Стили для модального окна создания книги */
+#createBookModal .modal-body {
+    padding: 20px;
+}
+
+#worksList {
+    background-color: #f8f9fa;
+    border-radius: 5px;
+}
+
+#worksList .form-check {
+    padding: 5px 10px;
+    margin-bottom: 5px;
+    border-bottom: 1px solid #eee;
+}
+
+#worksList .form-check:last-child {
+    border-bottom: none;
+}
+
+
+
 /* Стили для уведомлений */
 .alert {
     position: fixed;

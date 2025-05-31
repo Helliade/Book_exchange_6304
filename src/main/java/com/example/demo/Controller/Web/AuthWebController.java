@@ -40,5 +40,10 @@ public class AuthWebController {
     public String history() {
         return "history";
     }
+
+    @GetMapping("/order")
+    public String order() {
+        return "order";
+    }
 }
 

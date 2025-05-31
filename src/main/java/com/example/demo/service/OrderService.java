@@ -111,9 +111,8 @@ public class OrderService {
                         bookRepository.save(book);
                     }
                 }
-                getCartByUserIdAndType(order.getUser(), order.getType());
+                getCartByUserIdAndType(order.getUser().getId(), order.getType());
             }
-            else throw new IllegalStateException("Can't change the created order.");
 
             order.setStatus(newStatus);
             return orderRepository.save(order);
@@ -227,13 +226,19 @@ public class OrderService {
         return orders;
     }
 
-    public Order getCartByUserIdAndType (Username username, String type) {
-        List<Order> orders = getOrdersByUserIdAndArguments(username.getId(), type, "CART");
+    //в любом случае вернется корзина нужного типа
+    public Order getCartByUserIdAndType (Long userId, String type) {
+        List<Order> orders = getOrdersByUserIdAndArguments(userId, type, "CART");
+        Order order = new Order();
         if (orders.isEmpty()) {
-            return createOrder(usernameRepository.findById(username.getId())
-                    .orElseThrow(() -> new EntityNotFoundException("User not found")));
+            order = createOrder(usernameRepository.findById(userId)
+                            .orElseThrow(() -> new EntityNotFoundException("User not found")));
+            if (type.equals(order.getType())) {
+                order.setType(type);
+                orderRepository.save(order);
+            }
         }
-        return orders.get(0);
+        return orders.set(0, order);
     }
 
     public List<Order> getOrdersByArguments(String type, String status) {

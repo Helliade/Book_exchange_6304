@@ -112,7 +112,7 @@ public class OrderController {
         try {
             String accessToken = authHeader.substring(7);
             Order order = orderService.getCartByUserIdAndType
-                    (jwtService.extractUsernameModel(accessToken), typeOfOrder);
+                    (jwtService.extractUsernameModel(accessToken).getId(), typeOfOrder);
             Order updatedOrder = orderService.addBookToOrder(order.getId(), bookId);
             return ResponseEntity.ok(new OrderDTO(updatedOrder));                        //Возвращаем DTO с HTTP 200
 
@@ -133,8 +133,7 @@ public class OrderController {
 //    }
 
 //PATCH
-    //TODO может после обновления попробовать поискать заказ в статусе корзины (найдется лишний)
-    // + проверка на то, что пользователь может лишь оформить и отменить заказ
+    //TODO проверка на то, что пользователь может лишь оформить и отменить заказ
     @PatchMapping("/{orderId}/status")
     public ResponseEntity<?> updateOrderStatus(
         @PathVariable Long orderId,
