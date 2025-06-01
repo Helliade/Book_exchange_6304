@@ -161,7 +161,7 @@ function renderOrders(orders) {
         }).join('<hr class="book-divider">');
         
         // Кнопка "Отменить" для незавершенных заказов ?????????????????????????????? \/
-        const cancelButton = (order.status !== 'COMPLETED' && order.status !== 'CANCELLED') 
+        const cancelButton = (order.status !== 'COMPLETED' && order.status !== 'CANCELLED')
             ? `<button class="btn btn-outline-danger btn-sm cancel-order" data-order-id="${order.id}">
                 Отменить
                </button>`
@@ -185,7 +185,7 @@ function renderOrders(orders) {
         btn.addEventListener('click', async (e) => {
             const orderId = e.currentTarget.dataset.orderId;
             try {
-                await updateOrderStatus(orderId, 'CANCELLED');
+                await updateOrderStatus(orderId);
                 await loadOrders();
                 showSuccess('Заказ успешно отменен');
             } catch (error) {
@@ -205,13 +205,9 @@ function getStatusText(status) {
     return statusMap[status] || status;
 }
 
-async function updateOrderStatus(orderId, status) {
-    const response = await authFetch(`/api/orders/${orderId}/status`, {
-        method: 'PATCH',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ status })
+async function updateOrderStatus(orderId) {
+    const response = await authFetch(`/api/orders/${orderId}/status?status=CANCELLED`, {
+        method: 'PATCH'
     });
 
     if (!response.ok) {

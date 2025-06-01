@@ -75,8 +75,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 async function loadBooks(token) {
     try {
-        const response = await authFetch('/api/books', {
-            method: 'GET',
+          const response = await authFetch('/api/books', {
+          method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json'
@@ -203,10 +203,11 @@ function renderBooks(books) {
 }
 
 async function addToCart(bookId) {
-    const response = await authFetch(`/api/orders/addBook`, {
+    const response = await authFetch(`/api/orders/addBook?bookId=${bookId}&typeOfOrder=TAKE`, {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
         },
         body: JSON.stringify({ bookId })
     });
