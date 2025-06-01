@@ -73,6 +73,11 @@ public class OrderService {
         return orderRepository.save(order);
     }
 
+    public Order createOrder(String type, Username user) {
+        Order order = new Order(type, "CART", user);
+        return orderRepository.save(order);
+    }
+
     //Удаление заказа
     public void deleteOrder(Long orderId) {
         orderRepository.findById(orderId)                           //находим заказ
@@ -217,28 +222,25 @@ public class OrderService {
         }
 
         // Проверка результатов
-        if (orders.isEmpty()) {
-            String mess = "No orders found.";
-            if (type != null) mess += " Searched for type: " + type + ".";
-            if (status != null) mess += " Searched for status: " + status + ".";
-            throw new EntityNotFoundException(mess);
-        }
+//        if (orders.isEmpty()) {
+//            String mess = "No orders found.";
+//            if (type != null) mess += " Searched for type: " + type + ".";
+//            if (status != null) mess += " Searched for status: " + status + ".";
+//            throw new EntityNotFoundException(mess);
+//        }
         return orders;
     }
 
     //в любом случае вернется корзина нужного типа
     public Order getCartByUserIdAndType (Long userId, String type) {
         List<Order> orders = getOrdersByUserIdAndArguments(userId, type, "CART");
-        Order order = new Order();
         if (orders.isEmpty()) {
-            order = createOrder(usernameRepository.findById(userId)
+            Order order = new Order();
+            order = createOrder(type, usernameRepository.findById(userId)
                             .orElseThrow(() -> new EntityNotFoundException("User not found")));
-            if (type.equals(order.getType())) {
-                order.setType(type);
-                orderRepository.save(order);
-            }
+            return order;
         }
-        return orders.set(0, order);
+        return orders.get(0);
     }
 
     public List<Order> getOrdersByArguments(String type, String status) {

@@ -103,7 +103,7 @@ public class OrderController {
         return ResponseEntity.ok(new OrderDTO(orderService.createOrder(usernameService.getUsernameById(userId))));
     }
 
-    @PostMapping(value = "/addBook")
+    @PostMapping("/addBook")
     public ResponseEntity<?> addBookToOrder(
             @RequestParam Long bookId,
             @RequestParam String typeOfOrder,

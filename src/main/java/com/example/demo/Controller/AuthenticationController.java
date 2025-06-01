@@ -66,12 +66,8 @@ public class AuthenticationController {
             @RequestHeader("RefreshToken") String refreshToken
     ) {
         try {
-            // Проверяем старый access token (должен быть валидным для одноразового использования)
+            // Проверяем старый access token
             String oldAccessToken = authHeader.substring(7);
-//            if (!jwtService.validateAccessToken(oldAccessToken)) {
-//                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-//                        .body(Map.of("error", "Invalid or used access token"));
-//            }
 
             // Проверяем refresh token
             if (!jwtService.validateRefreshToken(refreshToken)) {
